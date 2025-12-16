@@ -1,0 +1,183 @@
+/* Graph View Styles */
+.view-mode-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 10px;
+    background: white;
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.view-mode-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #f1f5f9;
+    color: #475569;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.view-mode-btn:hover {
+    background: #e2e8f0;
+}
+
+.view-mode-btn.active {
+    background: #2563eb;
+    color: white;
+}
+
+#graph-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f8fafc;
+    display: none;
+}
+
+#graph-container.active {
+    display: block;
+}
+
+/* Faction Map Container (for double-click view) */
+#faction-map-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+}
+
+#faction-map {
+    width: 100%;
+    height: 100%;
+}
+
+/* Graph SVG */
+#graph-svg {
+    background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 100%);
+}
+
+/* Graph nodes */
+.graph-node {
+    cursor: grab;
+    stroke: #fff;
+    stroke-width: 2px;
+    transition: stroke 0.2s, stroke-width 0.2s;
+}
+
+.graph-node:hover {
+    stroke: #fbbf24;
+    stroke-width: 3px;
+}
+
+/* Graph links */
+.graph-link {
+    stroke: #94a3b8;
+    stroke-opacity: 0.4;
+    fill: none;
+}
+
+/* Ensure map bubbles have no stroke in graph/faction map view */
+.conflict-bubble,
+.event-bubble,
+.faction-map-bubble {
+    stroke: none !important;
+}
+
+/* Graph labels */
+.graph-node-label {
+    fill: #1e293b;
+    font-size: 0.7rem;
+    font-weight: 600;
+    pointer-events: none;
+    text-anchor: middle;
+    user-select: none;
+}
+
+/* Graph controls */
+.graph-control-btn {
+    padding: 8px 12px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #475569;
+    transition: all 0.2s;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.graph-control-btn:hover {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.graph-control-btn:active {
+    transform: scale(0.95);
+}
+
+/* Graph tooltip */
+.graph-tooltip {
+    position: absolute;
+    background: rgba(30, 41, 59, 0.95);
+    color: white;
+    padding: 10px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    pointer-events: none;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.graph-tooltip strong {
+    color: #fbbf24;
+    font-size: 0.95rem;
+}
+
+/* Focus Mode Styles */
+.graph-node.focused-node {
+    stroke: #fbbf24 !important;
+    stroke-width: 4px !important;
+    filter: drop-shadow(0 0 8px #fbbf24);
+}
+
+.graph-node.connected-node {
+    stroke: #fff;
+    stroke-width: 2.5px;
+}
+
+.graph-node.dimmed-node {
+    opacity: 0.15;
+    pointer-events: none;
+}
+
+.focused-link {
+    stroke-opacity: 0.9 !important;
+}
+
+.dimmed-link {
+    stroke-opacity: 0.05 !important;
+}
+
+/* Relationship filter section */
+.relationship-filter-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--accent-primary, #3b82f6);
+}

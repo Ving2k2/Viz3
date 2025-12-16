@@ -1,0 +1,2 @@
+path/to/GEDEvent_v25_1.csv filter=lfs diff=lfs merge=lfs -text
+GEDEvent_v25_1.csv filter=lfs diff=lfs merge=lfs -text
