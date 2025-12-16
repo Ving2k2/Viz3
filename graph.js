@@ -411,6 +411,7 @@ function drawConflictBubbles() {
         .attr("cy", d => projection(d.coordinates)[1])
         .attr("r", 0)
         .style("fill", d => REGION_COLORS[d.region])
+        .style("stroke", "none")
         .style("cursor", "pointer")
         .style("opacity", 0)
         .on("click", handleBubbleClick);
@@ -570,6 +571,7 @@ function drawIndividualEventBubbles() {
         .attr("cy", d => projection([d.longitude, d.latitude])[1])
         .attr("r", d => radiusScale(d.best))
         .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
+        .style("stroke", "none")
         .style("cursor", "pointer")
         .classed("selected-event", d => viewState.selectedEvent && d === viewState.selectedEvent)
         .classed("unselected-event", d => viewState.selectedEvent && d !== viewState.selectedEvent)
@@ -605,9 +607,38 @@ function selectEvent(event) {
     }
     lastEventSelectTime = now;
 
+    // Check if we are in Faction View (Multi-Country Level) and need to drill down first
+    if (viewState.mode === 'faction' && viewState.factionViewLevel === 'world' && event.country) {
+        // We are in faction world view (aggregated country bubbles), but want to select a specific event.
+        // We must first enter the country level view for this event's country.
+        enterFactionCountryLevel(event.country);
+
+        // After entering country level, we need to wait for the bubbles to be drawn before we can highlighted them.
+        // Since drawFactionBubbles (called by enterFactionCountryLevel) is synchronous (transition is async but elements exist),
+        // we can proceed. However, a small delay allows the transition to start.
+        // We'll wrap the rest in a slightly delayed requestAnimationFrame or timeout to ensure safe execution
+        // AND to allow the "zoom to country" to register before we "zoom to event".
+        // Actually, "Zoom to event" is requested.
+
+        // Let's defer the actual selection highlighting and event-zooming slightly.
+        setTimeout(() => {
+            highlightAndZoomToEvent(event);
+        }, 100);
+
+        return;
+    }
+
+    highlightAndZoomToEvent(event);
+}
+
+function highlightAndZoomToEvent(event) {
     // Early exit if same event is already selected
     if (viewState.selectedEvent === event) {
-        return;
+        // Even if already selected, we might want to re-zoom if the map moved? 
+        // For now, keep existing optimization but ensure zoom logic runs if needed.
+        // Actually, if user clicks it again in the list, they might expect a re-zoom.
+        // Let's allow re-zooming.
+        // return; 
     }
 
     viewState.selectedEvent = event;
@@ -622,11 +653,11 @@ function selectEvent(event) {
             .classed("unselected-event", false);
 
         // Add selection class only to selected bubble
-        bubbles.filter(d => d === event)
+        bubbles.filter(d => d.id === event.id || (d.year === event.year && d.latitude === event.latitude && d.longitude === event.longitude)) // robust matching
             .classed("selected-event", true);
 
         // Batch update non-selected bubbles - make them gray
-        bubbles.filter(d => d !== event)
+        bubbles.filter(d => !(d.id === event.id || (d.year === event.year && d.latitude === event.latitude && d.longitude === event.longitude)))
             .classed("unselected-event", true);
     });
 
@@ -650,7 +681,7 @@ function selectEvent(event) {
 
                 // Apply zoom transformation
                 mapGroup.transition()
-                    .duration(750)
+                    .duration(1500) // Slower, smoother zoom for the "fly to" effect
                     .attr("transform", `translate(${x}, ${y}) scale(${scale})`);
 
                 // Update current zoom state
@@ -871,152 +902,9 @@ function findCountryFeature(countryName) {
     if (countryFeature) return countryFeature;
 
     // 3. Check manual mapping FIRST (before fuzzy matching)
-    const manualMapping = {
-        // === HISTORICAL/POLITICAL NAME CHANGES ===
-        "Cambodia (Kampuchea)": "Cambodia",
-        "Kampuchea": "Cambodia",
-
-        // Congo variations - MUST come before fuzzy matching
-        "DR Congo (Zaire)": "Dem. Rep. Congo",
-        "DR Congo": "Dem. Rep. Congo",
-        "Democratic Republic of the Congo": "Dem. Rep. Congo",
-        "Congo, DR": "Dem. Rep. Congo",
-        "Zaire": "Dem. Rep. Congo",
-        "Congo": "Congo",
-        "Republic of the Congo": "Congo",
-
-        // Myanmar
-        "Myanmar (Burma)": "Myanmar",
-        "Burma": "Myanmar",
-
-        // Zimbabwe
-        "Zimbabwe (Rhodesia)": "Zimbabwe",
-        "Rhodesia": "Zimbabwe",
-
-        // Yemen
-        "Yemen (North Yemen)": "Yemen",
-        "North Yemen": "Yemen",
-        "South Yemen": "Yemen",
-
-        // Russia/Soviet Union
-        "Russia (Soviet Union)": "Russia",
-        "Soviet Union": "Russia",
-        "USSR": "Russia",
-
-        // === YUGOSLAVIA SUCCESSOR STATES ===
-        "Serbia (Yugoslavia)": "Serbia",
-        "Yugoslavia": "Serbia",
-        "Serbia and Montenegro": "Serbia",
-        "Federal Republic of Yugoslavia": "Serbia",
-
-        "Bosnia-Herzegovina": "Bosnia and Herz.",
-        "Bosnia and Herzegovina": "Bosnia and Herz.",
-        "Bosnia": "Bosnia and Herz.",
-
-        "Montenegro": "Montenegro",
-
-        "Macedonia": "North Macedonia",
-        "FYROM": "North Macedonia",
-        "Former Yugoslav Republic of Macedonia": "North Macedonia",
-
-        "Croatia": "Croatia",
-        "Slovenia": "Slovenia",
-
-        // === ASIAN COUNTRIES ===
-        "Laos": "Lao PDR",
-        "Vietnam": "Vietnam",
-        "Viet Nam": "Vietnam",
-
-        "Timor-Leste (East Timor)": "Timor-Leste",
-        "East Timor": "Timor-Leste",
-
-        "North Korea": "Dem. Rep. Korea",
-        "South Korea": "Korea",
-        "Republic of Korea": "Korea",
-
-        // === AFRICAN COUNTRIES ===
-        "Libya": "Libya",
-        "Egypt": "Egypt",
-        "Tunisia": "Tunisia",
-        "Algeria": "Algeria",
-        "Morocco": "Morocco",
-
-        "Mauritania": "Mauritania",
-        "Senegal": "Senegal",
-        "Gambia": "Gambia",
-        "Guinea-Bissau": "Guinea-Bissau",
-        "Guinea": "Guinea",
-        "Sierra Leone": "Sierra Leone",
-        "Liberia": "Liberia",
-        "Ivory Coast": "Côte d'Ivoire",
-        "Equatorial Guinea": "Eq. Guinea",
-        "Gabon": "Gabon",
-
-        "Sudan": "Sudan",
-        "South Sudan": "S. Sudan",
-        "Eritrea": "Eritrea",
-        "Ethiopia": "Ethiopia",
-        "Djibouti": "Djibouti",
-        "Somalia": "Somalia",
-        "Kenya": "Kenya",
-        "Uganda": "Uganda",
-        "Rwanda": "Rwanda",
-        "Burundi": "Burundi",
-        "Tanzania": "Tanzania",
-
-        "Angola": "Angola",
-        "Zambia": "Zambia",
-        "Malawi": "Malawi",
-        "Mozambique": "Mozambique",
-        "Zimbabwe": "Zimbabwe",
-        "Botswana": "Botswana",
-        "Namibia": "Namibia",
-        "South Africa": "South Africa",
-        "Lesotho": "Lesotho",
-        "Eswatini": "eSwatini",
-        "Swaziland": "eSwatini",
-        "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-        // === EUROPEAN COUNTRIES ===
-        "Czech Republic": "Czechia",
-        "Czechia": "Czechia",
-
-        "Belarus": "Belarus",
-        "Byelarus": "Belarus",
-        "Belorussia": "Belarus",
-
-        "Moldova": "Moldova",
-        "Moldavia": "Moldova",
-
-        // === AMERICAS ===
-        "United States": "United States of America",
-        "USA": "United States of America",
-        "US": "United States of America",
-        "U.S.A.": "United States of America",
-
-        "Dominican Republic": "Dominican Rep.",
-
-        // === MIDDLE EAST ===
-        "Palestine": "Palestine",
-        "West Bank": "Palestine",
-        "Gaza": "Palestine",
-
-        // === ADDITIONAL MAPPINGS ===
-        "United Kingdom": "United Kingdom",
-        "UK": "United Kingdom",
-        "Great Britain": "United Kingdom",
-
-        "Bahrain": "Bahrain",
-        "Comoros": "Comoros",
-        "Madagascar": "Madagascar",
-        "Madagascar (Malagasy)": "Madagascar",
-        "Malagasy": "Madagascar",
-        "North Macedonia": "North Macedonia",
-        "Solomon Islands": "Solomon Is."
-    };
-
-    if (manualMapping[countryName]) {
-        countryFeature = allCountryFeatures.find(c => c.properties.name === manualMapping[countryName]);
+    // Use shared COUNTRY_NAME_MAPPING
+    if (COUNTRY_NAME_MAPPING[countryName]) {
+        countryFeature = allCountryFeatures.find(c => c.properties.name === COUNTRY_NAME_MAPPING[countryName]);
         if (countryFeature) return countryFeature;
     }
 
@@ -1045,29 +933,15 @@ function handleCountryClick(event, d) {
     const mapCountryName = d.properties.name;
 
     // Reverse manual mapping: map feature name -> CSV country name
-    const reverseMapping = {
-        "Dem. Rep. Congo": "DR Congo (Zaire)",
-        "Congo": "Congo",
-        "S. Sudan": "South Sudan",
-        "Central African Rep.": "Central African Republic",
-        "Eq. Guinea": "Equatorial Guinea",
-        "eSwatini": "Kingdom of eSwatini (Swaziland)",
-        "Côte d'Ivoire": "Ivory Coast",
-        "Lao PDR": "Laos",
-        "Timor-Leste": "Timor-Leste (East Timor)",
-        "Dem. Rep. Korea": "North Korea",
-        "Korea": "South Korea",
-        "Bosnia and Herz.": "Bosnia-Herzegovina",
-        "North Macedonia": "Macedonia",
-        "Czechia": "Czech Republic",
-        "United States of America": "United States",
-        "Dominican Rep.": "Dominican Republic",
-        "Solomon Is.": "Solomon Islands",
-        "Myanmar": "Myanmar (Burma)"
-    };
+    // Reverse manual mapping: map feature name -> CSV country name
+    // Use shared COUNTRY_NAME_MAPPING
+    let csvCountryName = mapCountryName;
 
-    // Try to find the CSV name using reverse mapping
-    const csvCountryName = reverseMapping[mapCountryName] || mapCountryName;
+    // Find key in COUNTRY_NAME_MAPPING where value === mapCountryName
+    const mappingEntry = Object.entries(COUNTRY_NAME_MAPPING).find(([key, value]) => value === mapCountryName);
+    if (mappingEntry) {
+        csvCountryName = mappingEntry[0];
+    }
 
     // Try exact match with CSV name
     let countryConflictData = processedData.find(c => c.name === csvCountryName);
@@ -1134,217 +1008,12 @@ function handleBubbleClick(event, d) {
 
     // 3. Check manual mapping FIRST (before fuzzy matching)
     // This prevents "DR Congo (Zaire)" from matching "Congo" in fuzzy search
+    // 3. Check manual mapping FIRST (before fuzzy matching)
+    // Use shared COUNTRY_NAME_MAPPING
     if (!countryFeature) {
-        const manualMapping = {
-            // === HISTORICAL/POLITICAL NAME CHANGES ===
-
-            // Cambodia
-            "Cambodia (Kampuchea)": "Cambodia",
-            "Kampuchea": "Cambodia",
-
-            // Congo variations - MUST come before fuzzy matching
-            "DR Congo (Zaire)": "Dem. Rep. Congo",
-            "DR Congo": "Dem. Rep. Congo",
-            "Democratic Republic of the Congo": "Dem. Rep. Congo",
-            "Congo, DR": "Dem. Rep. Congo",
-            "Zaire": "Dem. Rep. Congo",
-            "Congo": "Congo",  // Republic of Congo
-            "Republic of the Congo": "Congo",
-
-            // Myanmar
-            "Myanmar (Burma)": "Myanmar",
-            "Burma": "Myanmar",
-
-            // Zimbabwe
-            "Zimbabwe (Rhodesia)": "Zimbabwe",
-            "Rhodesia": "Zimbabwe",
-
-            // Yemen
-            "Yemen (North Yemen)": "Yemen",
-            "North Yemen": "Yemen",
-            "South Yemen": "Yemen",
-
-            // Russia/Soviet Union
-            "Russia (Soviet Union)": "Russia",
-            "Soviet Union": "Russia",
-            "USSR": "Russia",
-
-            // === YUGOSLAVIA SUCCESSOR STATES ===
-
-            // Serbia
-            "Serbia (Yugoslavia)": "Serbia",
-            "Yugoslavia": "Serbia",
-            "Serbia and Montenegro": "Serbia",
-            "Federal Republic of Yugoslavia": "Serbia",
-
-            // Bosnia
-            "Bosnia-Herzegovina": "Bosnia and Herz.",
-            "Bosnia and Herzegovina": "Bosnia and Herz.",
-            "Bosnia": "Bosnia and Herz.",
-
-            // Montenegro
-            "Montenegro": "Montenegro",
-
-            // Macedonia
-            "Macedonia": "North Macedonia",
-            "FYROM": "North Macedonia",
-            "Former Yugoslav Republic of Macedonia": "North Macedonia",
-
-            // Croatia
-            "Croatia": "Croatia",
-
-            // Slovenia
-            "Slovenia": "Slovenia",
-
-            // === ASIAN COUNTRIES ===
-
-            // Laos
-            "Laos": "Lao PDR",
-
-            // Vietnam
-            "Vietnam": "Vietnam",
-            "Viet Nam": "Vietnam",
-
-            // Timor
-            "Timor-Leste (East Timor)": "Timor-Leste",
-            "East Timor": "Timor-Leste",
-
-            // Korea
-            "North Korea": "Dem. Rep. Korea",
-            "South Korea": "Korea",
-            "Republic of Korea": "Korea",
-
-            // === AFRICAN COUNTRIES ===
-
-            // North Africa
-            "Libya": "Libya",
-            "Egypt": "Egypt",
-            "Tunisia": "Tunisia",
-            "Algeria": "Algeria",
-            "Morocco": "Morocco",
-
-            // West Africa
-            "Mauritania": "Mauritania",
-            "Senegal": "Senegal",
-            "Gambia": "Gambia",
-            "Guinea-Bissau": "Guinea-Bissau",
-            "Guinea": "Guinea",
-            "Sierra Leone": "Sierra Leone",
-            "Liberia": "Liberia",
-            "Ivory Coast": "Côte d'Ivoire",
-            "Mali": "Mali",
-            "Burkina Faso": "Burkina Faso",
-            "Ghana": "Ghana",
-            "Togo": "Togo",
-            "Benin": "Benin",
-            "Niger": "Niger",
-            "Nigeria": "Nigeria",
-
-            // Central Africa
-            "Chad": "Chad",
-            "Cameroon": "Cameroon",
-            "Central African Republic": "Central African Rep.",
-            "Equatorial Guinea": "Eq. Guinea",
-            "Gabon": "Gabon",
-            "Congo": "Congo",
-            "Republic of the Congo": "Congo",
-            "DR Congo (Zaire)": "Dem. Rep. Congo",
-            "DR Congo": "Dem. Rep. Congo",
-            "Democratic Republic of the Congo": "Dem. Rep. Congo",
-
-            // East Africa
-            "Sudan": "Sudan",
-            "South Sudan": "S. Sudan",
-            "Eritrea": "Eritrea",
-            "Ethiopia": "Ethiopia",
-            "Djibouti": "Djibouti",
-            "Somalia": "Somalia",
-            "Kenya": "Kenya",
-            "Uganda": "Uganda",
-            "Rwanda": "Rwanda",
-            "Burundi": "Burundi",
-            "Tanzania": "Tanzania",
-
-            // Southern Africa
-            "Angola": "Angola",
-            "Zambia": "Zambia",
-            "Malawi": "Malawi",
-            "Mozambique": "Mozambique",
-            "Zimbabwe": "Zimbabwe",
-            "Botswana": "Botswana",
-            "Namibia": "Namibia",
-            "South Africa": "South Africa",
-            "Lesotho": "Lesotho",
-            "Eswatini": "eSwatini",
-            "Swaziland": "eSwatini",
-            "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-            // === EUROPEAN COUNTRIES ===
-
-            // Czech Republic
-            "Czech Republic": "Czechia",
-            "Czechia": "Czechia",
-
-            // Belarus
-            "Belarus": "Belarus",
-            "Byelarus": "Belarus",
-            "Belorussia": "Belarus",
-
-            // Moldova
-            "Moldova": "Moldova",
-            "Moldavia": "Moldova",
-
-            // === AMERICAS ===
-
-            // United States
-            "United States": "United States of America",
-            "USA": "United States of America",
-            "US": "United States of America",
-            "U.S.A.": "United States of America",
-
-            // Dominican Republic
-            "Dominican Republic": "Dominican Rep.",
-
-            // === MIDDLE EAST ===
-
-            // Palestine
-            "Palestine": "Palestine",
-            "West Bank": "Palestine",
-            "Gaza": "Palestine",
-
-            // === ADDITIONAL MAPPINGS ===
-
-            // United Kingdom
-            "United Kingdom": "United Kingdom",
-            "UK": "United Kingdom",
-            "Great Britain": "United Kingdom",
-
-            // === MISSING COUNTRIES FIX ===
-
-            // Bahrain
-            "Bahrain": "Bahrain",
-
-            // Comoros
-            "Comoros": "Comoros",
-
-            // Kingdom of eSwatini
-            "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-            // Madagascar
-            "Madagascar": "Madagascar",
-            "Madagascar (Malagasy)": "Madagascar",
-            "Malagasy": "Madagascar",
-
-            // North Macedonia (explicit)
-            "North Macedonia": "North Macedonia",
-
-            // Solomon Islands
-            "Solomon Islands": "Solomon Is."
-        };
-
-        const allCountryFeatures = mapGroup.selectAll(".country").data();
-        if (manualMapping[countryName]) {
-            countryFeature = allCountryFeatures.find(c => c.properties.name === manualMapping[countryName]);
+        if (COUNTRY_NAME_MAPPING[countryName]) {
+            const allCountryFeatures = mapGroup.selectAll(".country").data();
+            countryFeature = allCountryFeatures.find(c => c.properties.name === COUNTRY_NAME_MAPPING[countryName]);
         }
     }
 
@@ -1649,18 +1318,14 @@ function drawFactionCountryBubbles(events, countries) {
         .attr("r", d => radiusScale(d.casualties));
 }
 
-// Handle click on country bubble in faction view - zoom to that country and show events
-function handleFactionCountryClick(event, d) {
-    event.stopPropagation();
-
-
-
+// Helper to enter country level within faction view
+function enterFactionCountryLevel(countryName) {
     // Set selected country in faction
-    viewState.selectedCountryInFaction = d.country;
+    viewState.selectedCountryInFaction = countryName;
     viewState.factionViewLevel = 'country';
 
     // Find country feature and zoom
-    const countryFeature = findCountryFeature(d.country);
+    const countryFeature = findCountryFeature(countryName);
     if (countryFeature) {
         zoomToCountry(countryFeature);
     }
@@ -1669,8 +1334,14 @@ function handleFactionCountryClick(event, d) {
     bubblesGroup.selectAll(".faction-country-bubble").remove();
 
     // Filter events to this country only
-    const countryEvents = viewState.selectedFactionData.filter(e => e.country === d.country);
+    const countryEvents = viewState.selectedFactionData.filter(e => e.country === countryName);
     drawFactionBubbles(countryEvents);
+}
+
+// Handle click on country bubble in faction view - zoom to that country and show events
+function handleFactionCountryClick(event, d) {
+    event.stopPropagation();
+    enterFactionCountryLevel(d.country);
 }
 
 // Update country bubble sizes when time slider changes (like updateWorldBubbles)
@@ -5655,23 +5326,10 @@ function displayFactionCharts(factionData, factionEvents) {
 
     // Use unified updateDashboardUI for SAME charts as Country View
     if (typeof updateDashboardUI === 'function') {
-        updateDashboardUI(factionEvents, headerTitle, subTitle);
+        updateDashboardUI(factionEvents, headerTitle, subTitle, highlightAndZoomToEvent);
     } else {
-        // Fallback if function not available
-        console.warn('updateDashboardUI not available, using fallback');
-        const chartsPanel = d3.select("#charts-panel");
-        chartsPanel.style("display", "flex");
-        d3.select("#charts-title").text(headerTitle);
-        d3.select("#charts-subtitle").text(subTitle);
+        console.warn('updateDashboardUI not available');
     }
-
-    // FIX: Update the third chart container h4 title to "Most Severe Events" 
-    // (instead of "Top Factions by...")
-    const topEventsContainer = d3.select("#charts-panel").select(".chart-container:last-child");
-    topEventsContainer.select("h4").text("Most Severe Events");
-
-    // FIX: Hide the sort controls since we're showing events, not factions
-    d3.select("#faction-sort-controls").style("display", "none");
 }
 
 // Update charts when connected faction filter changes
@@ -5703,7 +5361,7 @@ function updateFactionChartsWithFilter(factionData, factionEvents, connectedFact
     }
 
     // Use unified dashboard update
-    updateDashboardUI(filteredEvents, headerTitle, subTitle);
+    updateDashboardUI(filteredEvents, headerTitle, subTitle, highlightAndZoomToEvent);
 
     // Filter bubbles on map if in map view
     filterEventBubblesOnMap(selectedFilter ? filteredEvents : null);
@@ -6696,9 +6354,7 @@ function drawFactionEventBubbles(events, viewLevel) {
                     event.stopPropagation();
                     selectFactionEvent(d);
                 })
-                .call(enter => enter.transition()
-                    .duration(600)
-                    .attr("r", d => radiusScale(d.best))),
+                .attr("r", d => radiusScale(d.best)),
             update => update,
             exit => exit.remove()
         );
@@ -6743,8 +6399,7 @@ function drawFactionCountryBubbles(events, countries) {
                 .attr("r", 0)
                 .style("fill", REGION_COLORS[viewState.selectedFactionData?.[0]?.region] || "#3b82f6")
                 .style("fill-opacity", 0.7)
-                .style("stroke", "#fff")
-                .style("stroke-width", 2)
+                .style("stroke", "none")
                 .style("cursor", "pointer")
                 .on("click", (event, d) => {
                     event.stopPropagation();
@@ -6783,9 +6438,7 @@ function drawFactionCountryBubbles(events, countries) {
                         }, 600);
                     }
                 })
-                .call(enter => enter.transition()
-                    .duration(600)
-                    .attr("r", d => radiusScale(d.casualties))),
+                .attr("r", d => radiusScale(d.casualties)),
             update => update,
             exit => exit.remove()
         );

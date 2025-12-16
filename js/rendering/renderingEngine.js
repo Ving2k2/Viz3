@@ -87,22 +87,18 @@ class RenderingEngine {
             .attr("r", 0)
             // Premium styling - no stroke per user request
             .style("fill", d => REGION_COLORS[d.region])
+            .style("stroke", "none")
             .style("fill-opacity", 0.75)
             .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.2))")
             .style("cursor", "pointer")
             // Tooltip handlers
             .on("mouseover", (event, d) => self.showCountryTooltip(event, d))
             .on("mouseout", () => self.hideCountryTooltip())
-            .on("click", handleBubbleClick);
+            .on("click", handleBubbleClick)
+            .attr("r", d => radiusScale(d.totalCasualties));
 
-        enter.transition()
-            .duration(500)
-            .attr("r", d => radiusScale(d.totalCasualties))
-            .style("fill-opacity", 0.75);
-
+        // Update existing bubbles immediately
         bubbles
-            .transition()
-            .duration(200)
             .attr("r", d => radiusScale(d.totalCasualties))
             .style("fill-opacity", 0.75);
     }
@@ -119,8 +115,6 @@ class RenderingEngine {
             .range(baseRange);
 
         bubblesGroup.selectAll(".conflict-bubble")
-            .transition()
-            .duration(100)
             .attr("r", d => radiusScale(d.totalCasualties));
     }
 
@@ -139,46 +133,26 @@ class RenderingEngine {
         const eventBubbles = bubblesGroup.selectAll(".event-bubble")
             .data(events, (d, i) => `${d.country}-${d.year}-${i}`);
 
-        // Exit with animation - unified with conflict bubbles
-        eventBubbles.exit()
-            .transition()
-            .duration(300)
-            .attr("r", 0)
-            .style("fill-opacity", 0)
-            .remove();
+        eventBubbles.exit().remove();
 
         const enter = eventBubbles.enter()
             .append("circle")
             .attr("class", "event-bubble")
             .attr("cx", d => this.projection([d.longitude, d.latitude])[0])
             .attr("cy", d => this.projection([d.longitude, d.latitude])[1])
-            .attr("r", 0)
             // Premium styling - no stroke per user request
             .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-            .style("fill-opacity", 0.75)
-            .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.15))")
-            .style("cursor", "pointer")
-            .classed("selected-event", d => selectedEvent && d === selectedEvent)
-            .classed("unselected-event", d => selectedEvent && d !== selectedEvent)
-            .on("mouseover", handlers.showTooltip)
-            .on("mouseout", handlers.hideTooltip)
             .on("click", (event, d) => {
                 event.stopPropagation();
                 handlers.selectEvent(d);
-            });
-
-        // Animate bubbles in
-        enter.transition()
-            .duration(500)
-            .attr("r", d => radiusScale(d.best))
-            .style("fill-opacity", 0.75);
+            })
+            .attr("r", d => radiusScale(d.best)) // Set size immediately
+            .style("fill-opacity", d => selectedEvent && d !== selectedEvent ? 0.3 : 0.75);
 
         // Update existing bubbles
         eventBubbles
             .attr("cx", d => this.projection([d.longitude, d.latitude])[0])
             .attr("cy", d => this.projection([d.longitude, d.latitude])[1])
-            .transition()
-            .duration(200)
             .attr("r", d => radiusScale(d.best))
             .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
             .style("fill-opacity", d => {

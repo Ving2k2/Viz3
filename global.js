@@ -44,6 +44,18 @@ function initializeMap() {
             updateGlobalBubbleSizes();
         } else if (viewState.mode === 'country') {
             updateEventBubbleSizes();
+        } else if (viewState.mode === 'faction') {
+            // Check if we are in single country view (individual events) or region view (country bubbles)
+            if (viewState.selectedCountryInFaction) {
+                // Reuse event bubble sizing logic but adapted for faction events
+                if (typeof updateFactionEventBubbleSizes === 'function') {
+                    updateFactionEventBubbleSizes();
+                }
+            } else {
+                if (typeof updateFactionCountryBubbleSizes === 'function') {
+                    updateFactionCountryBubbleSizes();
+                }
+            }
         }
     }, 50);
 
@@ -161,7 +173,20 @@ function initializeGlobalView() {
     updateGlobalPanel();
 
     // Setup legend and filters
-    createLegend();
+    // Setup legend and filters
+    createLegend((region, selectedRegions) => {
+        // Updated behavior: Check if single region selected -> Zoom to it
+        if (selectedRegions.length === 1 && selectedRegions[0] === region) {
+            zoomToRegion(region);
+        } else if (selectedRegions.length === Object.keys(REGION_COLORS).length) {
+            // All regions selected -> Zoom out
+            returnToWorldView();
+        }
+
+        // Always redraw bubbles based on filter
+        drawGlobalCountryBubbles();
+        updateGlobalPanel();
+    });
     createViolenceTypeFilter();
 
     // Show top countries in right panel
@@ -265,7 +290,12 @@ function enterCountryView(countryName, countryInfo) {
     setTimeout(() => {
         drawIndividualEventBubbles();
         updateCountryPanel();
-        updateDashboardUI();
+        updateCountryPanel();
+
+        // Prepare data for dashboard
+        const currentYear = +document.getElementById('year-slider').value;
+        const events = countryInfo.events.filter(e => e.year <= currentYear);
+        updateDashboardUI(events, `Statistics: ${countryName}`, "Country Overview", selectEvent);
     }, 300);
 
     // Show back button and right panel
@@ -289,6 +319,61 @@ function zoomToCountry(countryFeature) {
             zoom.transform,
             d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
         );
+}
+
+function zoomToRegion(regionName) {
+    if (!regionName || !worldMapFeatures) return;
+
+    // Find all countries in this region
+    // Use processedData to map country names to region
+    const regionCountries = processedData
+        .filter(d => d.region === regionName)
+        .map(d => d.name);
+
+    // Find corresponding map features
+    const features = worldMapFeatures.filter(f => {
+        const mapName = f.properties.name;
+        // Check if map name is in our region list (direct or mapped)
+        if (regionCountries.includes(mapName)) return true;
+
+        // Reverse check: is this map name mapped to a country in the region?
+        // We can use the COUNTRY_NAME_MAPPING from shared.js, but we need reverse lookup
+        // Simpler: Check if this feature is "found" as a country in this region
+        // This is a bit expensive, simplified approach:
+        return regionCountries.some(c => {
+            // Basic identity
+            if (c === mapName) return true;
+            // Check shared mapping
+            if (COUNTRY_NAME_MAPPING[c] === mapName) return true;
+            return false;
+        });
+    });
+
+    if (features.length === 0) return;
+
+    // Calculate bounds of the collection of features
+    const bounds = d3.geoPath().projection(projection).bounds({
+        type: "FeatureCollection",
+        features: features
+    });
+
+    const dx = bounds[1][0] - bounds[0][0];
+    const dy = bounds[1][1] - bounds[0][1];
+    const x = (bounds[0][0] + bounds[1][0]) / 2;
+    const y = (bounds[0][1] + bounds[1][1]) / 2;
+
+    const scale = Math.max(1, Math.min(20, 0.9 / Math.max(dx / mapWidth, dy / mapHeight)));
+    const translate = [mapWidth / 2 - scale * x, mapHeight / 2 - scale * y];
+
+    svg.transition()
+        .duration(750)
+        .call(
+            zoom.transform,
+            d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+        );
+
+    viewState.mode = 'region';
+    viewState.selectedRegion = regionName;
 }
 
 // ============================================================================
@@ -335,6 +420,7 @@ function drawIndividualEventBubbles() {
         .attr("cy", d => projection([d.longitude, d.latitude])[1])
         .attr("r", 0)
         .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
+        .style("stroke", "none")
         .style("fill-opacity", 0.75)
         .style("filter", "drop-shadow(0 2px 4px rgba(0,0,0,0.15))")
         .style("cursor", "pointer")
@@ -343,10 +429,7 @@ function drawIndividualEventBubbles() {
         .on("click", (event, d) => {
             event.stopPropagation();
             selectEvent(d);
-        });
-
-    enter.transition()
-        .duration(500)
+        })
         .attr("r", d => radiusScale(d.best));
 
     eventBubbles
@@ -414,7 +497,13 @@ function navigateBack() {
             .classed("selected-event", false)
             .classed("unselected-event", false);
 
-        updateDashboardUI();
+        if (viewState.selectedCountryData) {
+            const currentYear = +document.getElementById('year-slider').value;
+            const events = viewState.selectedCountryData.events.filter(e => e.year <= currentYear);
+            updateDashboardUI(events, `Statistics: ${viewState.selectedCountryName}`, "Country Overview", selectEvent);
+        } else {
+            updateDashboardUI([], "Statistics", "No Country Selected");
+        }
         updateCountryPanel();
         return true;
     }
@@ -490,7 +579,11 @@ if (typeof viewStateManager !== 'undefined' && viewStateManager.on) {
             renderTopCountriesList();
         } else if (data.newState.mode === 'country') {
             updateCountryPanel();
-            updateDashboardUI();
+            if (viewState.selectedCountryData) {
+                const currentYear = +document.getElementById('year-slider').value;
+                const events = viewState.selectedCountryData.events.filter(e => e.year <= currentYear);
+                updateDashboardUI(events, `Statistics: ${viewState.selectedCountryName}`, "Country Overview", selectEvent);
+            }
         }
     });
 }

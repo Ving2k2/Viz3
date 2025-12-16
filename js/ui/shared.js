@@ -31,55 +31,147 @@ const TYPE_COLORS = {
 
 // Country name mapping for data-to-map matching
 const COUNTRY_NAME_MAPPING = {
-    // Historical/Political name changes
+    // === HISTORICAL/POLITICAL NAME CHANGES ===
     "Cambodia (Kampuchea)": "Cambodia",
     "Kampuchea": "Cambodia",
+
+    // Congo variations
     "DR Congo (Zaire)": "Dem. Rep. Congo",
     "DR Congo": "Dem. Rep. Congo",
     "Democratic Republic of the Congo": "Dem. Rep. Congo",
     "Congo, DR": "Dem. Rep. Congo",
     "Zaire": "Dem. Rep. Congo",
+    "Congo": "Congo",
+    "Republic of the Congo": "Congo",
+
+    // Myanmar
     "Myanmar (Burma)": "Myanmar",
     "Burma": "Myanmar",
+
+    // Zimbabwe
     "Zimbabwe (Rhodesia)": "Zimbabwe",
     "Rhodesia": "Zimbabwe",
+
+    // Yemen
     "Yemen (North Yemen)": "Yemen",
+    "North Yemen": "Yemen",
+    "South Yemen": "Yemen",
+
+    // Russia/Soviet Union
     "Russia (Soviet Union)": "Russia",
     "Soviet Union": "Russia",
     "USSR": "Russia",
+
+    // === YUGOSLAVIA SUCCESSOR STATES ===
     "Serbia (Yugoslavia)": "Serbia",
     "Yugoslavia": "Serbia",
     "Serbia and Montenegro": "Serbia",
     "Federal Republic of Yugoslavia": "Serbia",
+
     "Bosnia-Herzegovina": "Bosnia and Herz.",
     "Bosnia and Herzegovina": "Bosnia and Herz.",
     "Bosnia": "Bosnia and Herz.",
+
     "Montenegro": "Montenegro",
+
     "Macedonia": "North Macedonia",
     "FYROM": "North Macedonia",
-    "Ivory Coast": "Côte d'Ivoire",
-    "East Timor": "Timor-Leste",
-    "Timor-Leste (East Timor)": "Timor-Leste",
+    "Former Yugoslav Republic of Macedonia": "North Macedonia",
+
+    "Croatia": "Croatia",
+    "Slovenia": "Slovenia",
+
+    // === ASIAN COUNTRIES ===
     "Laos": "Lao PDR",
     "Vietnam": "Vietnam",
     "Viet Nam": "Vietnam",
+
+    "Timor-Leste (East Timor)": "Timor-Leste",
+    "East Timor": "Timor-Leste",
+
     "North Korea": "Dem. Rep. Korea",
     "South Korea": "Korea",
-    "Central African Republic": "Central African Rep.",
-    "Dominican Republic": "Dominican Rep.",
+    "Republic of Korea": "Korea",
+
+    // === AFRICAN COUNTRIES ===
+    "Libya": "Libya",
+    "Egypt": "Egypt",
+    "Tunisia": "Tunisia",
+    "Algeria": "Algeria",
+    "Morocco": "Morocco",
+
+    "Mauritania": "Mauritania",
+    "Senegal": "Senegal",
+    "Gambia": "Gambia",
+    "Guinea-Bissau": "Guinea-Bissau",
+    "Guinea": "Guinea",
+    "Sierra Leone": "Sierra Leone",
+    "Liberia": "Liberia",
+    "Ivory Coast": "Côte d'Ivoire",
+    "Equatorial Guinea": "Eq. Guinea",
+    "Gabon": "Gabon",
+
+    "Sudan": "Sudan",
     "South Sudan": "S. Sudan",
-    "Czech Republic": "Czechia",
-    "United States": "United States of America",
-    "USA": "United States of America",
+    "Eritrea": "Eritrea",
+    "Ethiopia": "Ethiopia",
+    "Djibouti": "Djibouti",
+    "Somalia": "Somalia",
+    "Kenya": "Kenya",
+    "Uganda": "Uganda",
+    "Rwanda": "Rwanda",
+    "Burundi": "Burundi",
+    "Tanzania": "Tanzania",
+
+    "Angola": "Angola",
+    "Zambia": "Zambia",
+    "Malawi": "Malawi",
+    "Mozambique": "Mozambique",
+    "Zimbabwe": "Zimbabwe",
+    "Botswana": "Botswana",
+    "Namibia": "Namibia",
+    "South Africa": "South Africa",
+    "Lesotho": "Lesotho",
     "Eswatini": "eSwatini",
     "Swaziland": "eSwatini",
     "Kingdom of eSwatini (Swaziland)": "eSwatini",
+
+    // === EUROPEAN COUNTRIES ===
+    "Czech Republic": "Czechia",
+    "Czechia": "Czechia",
+
+    "Belarus": "Belarus",
+    "Byelarus": "Belarus",
+    "Belorussia": "Belarus",
+
+    "Moldova": "Moldova",
+    "Moldavia": "Moldova",
+
+    // === AMERICAS ===
+    "United States": "United States of America",
+    "USA": "United States of America",
+    "US": "United States of America",
+    "U.S.A.": "United States of America",
+
+    "Dominican Republic": "Dominican Rep.",
+
+    // === MIDDLE EAST ===
+    "Palestine": "Palestine",
+    "West Bank": "Palestine",
+    "Gaza": "Palestine",
+
+    // === ADDITIONAL MAPPINGS ===
+    "United Kingdom": "United Kingdom",
+    "UK": "United Kingdom",
+    "Great Britain": "United Kingdom",
+
+    "Bahrain": "Bahrain",
+    "Comoros": "Comoros",
+    "Madagascar": "Madagascar",
     "Madagascar (Malagasy)": "Madagascar",
     "Malagasy": "Madagascar",
     "North Macedonia": "North Macedonia",
-    "Solomon Islands": "Solomon Is.",
-    "Bahrain": "Bahrain",
-    "Comoros": "Comoros"
+    "Solomon Islands": "Solomon Is."
 };
 
 // ============================================================================
@@ -144,7 +236,7 @@ function processRawData(data) {
         year: +d.year,
         month: d.date_start && d.date_start.trim() !== '' ? new Date(d.date_start).getMonth() + 1 : null,
         date_start: d.date_start,
-        region: d.region || 'Unknown',
+        region: d.region ? d.region.trim() : 'Unknown',
         country: d.country,
         best: +d.best || 0,
         deaths_a: +d.deaths_a || 0,
@@ -929,4 +1021,172 @@ function renderEntityInfoPanel(container, options) {
     }
 
     return panel;
+}
+
+/**
+ * Render a list of events (e.g. Most Severe Events)
+ * @param {D3Selection} container - Container to append to
+ * @param {Array} events - Array of event objects
+ * @param {Object} options - {title, limit, onClick}
+ */
+function renderEventsList(container, events, options = {}) {
+    if (!events || events.length === 0) return;
+
+    const {
+        title = "Most Severe Events",
+        limit = 15,
+        onClick = null
+    } = options;
+
+    container.append("h4")
+        .style("margin", "1rem 0 0.5rem 0")
+        .style("font-size", "0.9rem")
+        .style("color", "#475569")
+        .text(title);
+
+    const listContainer = container.append("div")
+        .attr("class", "events-list-container") // Use class for styling hooks if needed
+        .style("background", "white")
+        .style("border-radius", "6px")
+        .style("overflow", "hidden")
+        .style("box-shadow", "0 1px 3px rgba(0,0,0,0.05)");
+
+    const sortedEvents = [...events].sort((a, b) => b.best - a.best).slice(0, limit);
+
+    sortedEvents.forEach((event, idx) => {
+        const item = listContainer.append("div")
+            .style("padding", "0.75rem")
+            .style("border-bottom", "1px solid #f1f5f9")
+            .style("cursor", onClick ? "pointer" : "default")
+            .style("border-left", `4px solid ${getViolenceTypeColor(event.type_of_violence_name)}`)
+            .style("transition", "background 0.2s")
+            .on("mouseenter", function () {
+                if (onClick) d3.select(this).style("background", "#f8fafc");
+            })
+            .on("mouseleave", function () {
+                if (onClick) d3.select(this).style("background", "white");
+            })
+            .on("click", () => {
+                if (onClick) onClick(event);
+            });
+
+        // Title Row
+        const titleRow = item.append("div")
+            .style("display", "flex")
+            .style("justify-content", "space-between")
+            .style("margin-bottom", "0.25rem");
+
+        titleRow.append("span")
+            .style("font-weight", "600")
+            .style("font-size", "0.85rem")
+            .style("color", "#1e293b")
+            .text(`${idx + 1}. ${event.date_start ? event.date_start.substring(0, 4) : event.year}`);
+
+        titleRow.append("span")
+            .style("font-weight", "700")
+            .style("color", "#ef4444")
+            .style("font-size", "0.85rem")
+            .text(d3.format(",d")(event.best));
+
+        // Subtitle Row
+        item.append("div")
+            .style("font-size", "0.75rem")
+            .style("color", "#64748b")
+            .style("line-height", "1.4")
+            .text(event.dyad_name || `${event.country} Conflict`);
+
+        // Location Row (if available)
+        if (event.where_description) {
+            item.append("div")
+                .style("font-size", "0.7rem")
+                .style("color", "#94a3b8")
+                .style("margin-top", "2px")
+                .style("white-space", "nowrap")
+                .style("overflow", "hidden")
+                .style("text-overflow", "ellipsis")
+                .text(event.where_description);
+        }
+    });
+
+    return listContainer;
+}
+
+/**
+ * Unified updateDashboardUI - used by both Graph and Map views to update the Charts Panel
+ * @param {Array} events - List of events to display stats for
+ * @param {String} title - Main title
+ * @param {String} subtitle - Subtitle (e.g. Faction Name or Region)
+ * @param {Function} onEventClick - Optional callback when an event in the list is clicked
+ */
+function updateDashboardUI(events, title, subtitle, onEventClick) {
+    const chartsPanel = d3.select("#charts-panel");
+    chartsPanel.style("display", "flex");
+
+    // Clear existing content except header if we want to preserve it? 
+    // Usually we rebuild.
+    chartsPanel.selectAll("*").remove();
+
+    // 1. Header
+    const header = chartsPanel.append("div")
+        .attr("class", "charts-header")
+        .style("margin-bottom", "1rem");
+
+    header.append("h3")
+        .attr("id", "charts-title")
+        .style("margin", "0 0 5px 0")
+        .style("font-size", "1.1rem")
+        .style("color", "#1e293b")
+        .text(title || "Statistics");
+
+    if (subtitle) {
+        header.append("p")
+            .attr("id", "charts-subtitle")
+            .style("margin", "0")
+            .style("font-size", "0.85rem")
+            .style("color", "#64748b")
+            .text(subtitle);
+    }
+
+    if (!events || events.length === 0) {
+        chartsPanel.append("div")
+            .style("padding", "2rem")
+            .style("text-align", "center")
+            .style("color", "#94a3b8")
+            .text("No data available");
+        return;
+    }
+
+    // 2. Stats Grid (Summary)
+    const totalCasualties = d3.sum(events, e => e.best);
+    const totalEvents = events.length;
+    // Calculate most active year
+    const byYear = d3.rollup(events, v => v.length, d => d.year);
+    const mostActiveYear = Array.from(byYear).sort((a, b) => b[1] - a[1])[0];
+
+    const stats = [
+        { label: "Total Casualties", value: d3.format(",d")(totalCasualties), color: "#ef4444" },
+        { label: "Total Events", value: d3.format(",d")(totalEvents), color: "#3b82f6" }
+    ];
+
+    if (mostActiveYear) {
+        stats.push({ label: "Most Active Year", value: mostActiveYear[0], color: "#f59e0b" });
+    }
+
+    renderStatsGrid(chartsPanel, stats);
+
+    // 3. Activity Heatmap
+    renderActivityHeatmap(chartsPanel, events, "Activity Timeline");
+
+    // 4. Violence Type Breakdown
+    renderViolenceTypeBreakdown(chartsPanel, events);
+
+    // 5. Most Severe Events List
+    // We try to use the passed click handler, or fallback to a global one if it exists
+    const clickHandler = onEventClick || (typeof highlightAndZoomToEvent === 'function' ? highlightAndZoomToEvent : null);
+
+    renderEventsList(chartsPanel, events, {
+        title: "Most Severe Events",
+        limit: 20,
+        onClick: clickHandler
+    });
 }
