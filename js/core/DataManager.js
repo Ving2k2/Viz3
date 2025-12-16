@@ -51,6 +51,129 @@ class DataManager {
     }
 
     // ========================================================================
+    // FILTER FUNNEL - UNIFIED CONTEXT-BASED FILTERING
+    // ========================================================================
+
+    /**
+     * Get events by context type - UNIFIED FILTER FUNNEL
+     * Both Map View (Country) and Graph View (Faction) use this single method.
+     * 
+     * @param {string} contextType - 'COUNTRY' | 'FACTION' | 'GLOBAL'
+     * @param {string|null} id - Country name or Faction ID
+     * @param {Object} options - Additional filters {year, violenceType}
+     * @returns {Array} Normalized events with uniform structure
+     */
+    getEventsByContext(contextType, id = null, options = {}) {
+        if (!this.isInitialized) {
+            console.warn('DataManager not initialized');
+            return [];
+        }
+
+        const { year = null, violenceType = null } = options;
+        let events = [];
+
+        // FILTER based on context type (the "Funnel")
+        switch (contextType) {
+            case 'COUNTRY':
+                events = this._getCountryEvents(id);
+                break;
+            case 'FACTION':
+                events = this._getFactionEvents(id);
+                break;
+            case 'GLOBAL':
+            default:
+                events = this.rawData || [];
+        }
+
+        // Apply optional time/type filters
+        if (year !== null) {
+            events = events.filter(e => e.year <= year);
+        }
+        if (violenceType !== null) {
+            events = events.filter(e => e.type_of_violence === violenceType || e.type_of_violence_name === violenceType);
+        }
+
+        // NORMALIZE output structure (ensures Charts don't break)
+        return this._normalizeEvents(events, contextType);
+    }
+
+    /**
+     * Get events for a specific country
+     * @private
+     */
+    _getCountryEvents(countryName) {
+        if (typeof dataFilterManager !== 'undefined') {
+            return dataFilterManager.getCountryEvents(countryName);
+        }
+        return (this.rawData || []).filter(d => d.country === countryName);
+    }
+
+    /**
+     * Get events for a specific faction
+     * @private
+     */
+    _getFactionEvents(factionId) {
+        if (typeof dataFilterManager !== 'undefined') {
+            return dataFilterManager.getFactionEvents(factionId);
+        }
+        return (this.rawData || []).filter(d =>
+            d.side_a === factionId || d.side_b === factionId ||
+            d.dyad_dset_id === factionId || d.side_a_dset_id === factionId || d.side_b_dset_id === factionId
+        );
+    }
+
+    /**
+     * Normalize events to uniform structure
+     * Ensures ChartRenderer receives consistent data regardless of source
+     * @private
+     */
+    _normalizeEvents(events, contextType) {
+        return events.map(e => ({
+            // Core identifiers
+            id: e.id || e.event_id,
+
+            // Casualties (unified field name)
+            casualties: e.best || 0,
+            best: e.best || 0,
+            deaths_a: e.deaths_a || 0,
+            deaths_b: e.deaths_b || 0,
+            deaths_civilians: e.deaths_civilians || 0,
+            deaths_unknown: e.deaths_unknown || 0,
+
+            // Time fields
+            year: e.year,
+            month: e.month || 1,
+            date_start: e.date_start,
+
+            // Location
+            country: e.country,
+            region: e.region,
+            latitude: e.latitude,
+            longitude: e.longitude,
+
+            // Violence classification
+            violenceType: e.type_of_violence,
+            type_of_violence: e.type_of_violence,
+            type_of_violence_name: e.type_of_violence_name,
+
+            // Faction info (normalized)
+            side_a: e.side_a,
+            side_b: e.side_b,
+            dyad_name: e.dyad_name,
+            dyad_dset_id: e.dyad_dset_id,
+            side_a_dset_id: e.side_a_dset_id,
+            side_b_dset_id: e.side_b_dset_id,
+
+            // Metadata
+            source: e.source_article || e.source,
+            source_headline: e.source_headline,
+
+            // Context marker
+            _contextType: contextType
+        }));
+    }
+
+    // ========================================================================
     // UNIFIED FILTERING
     // ========================================================================
 

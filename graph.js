@@ -773,7 +773,7 @@ function renderEventDetailsView(event) {
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
@@ -782,7 +782,7 @@ function renderEventDetailsView(event) {
                 ` : ''}
             </div>
             
-            <!-- Detailed Breakdown List - Clean format with actual faction names -->
+            <!-- Detailed Breakdown List -->
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 ${event.deaths_a > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #ef4444;">
@@ -797,9 +797,9 @@ function renderEventDetailsView(event) {
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #dc2626;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #22c55e;">
                     <span style="font-size: 0.8rem; color: #475569;">Civilians</span>
-                    <span style="font-weight: 600; color: #dc2626;">${d3.format(",d")(event.deaths_civilians)}</span>
+                    <span style="font-weight: 600; color: #16a34a;">${d3.format(",d")(event.deaths_civilians)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
@@ -810,16 +810,6 @@ function renderEventDetailsView(event) {
                 ` : ''}
             </div>
         </div>
-        
-        ${event.source_headline || event.source_article ? `
-        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(59, 130, 246, 0.1);">
-            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
-                Source Information
-            </h4>
-            ${event.source_headline ? `<p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; font-style: italic; line-height: 1.5;">"${event.source_headline}"</p>` : ''}
-            ${event.source_article ? `<p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">${event.source_article}</p>` : ''}
-        </div>
-        ` : ''}
         
         <!-- Factions Involved -->
         <div style="padding: 1rem; background: white; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.05);">
@@ -839,6 +829,16 @@ function renderEventDetailsView(event) {
             </div>
             ` : ''}
         </div>
+        
+        ${event.source_headline || event.source_article ? `
+        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-top: 1rem; border: 1px solid rgba(59, 130, 246, 0.1);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+                Source Information
+            </h4>
+            ${event.source_headline ? `<p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; font-style: italic; line-height: 1.5;">"${event.source_headline}"</p>` : ''}
+            ${event.source_article ? `<p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">${event.source_article}</p>` : ''}
+        </div>
+        ` : ''}
     `;
 
     detailsContainer.html(detailsHTML);
@@ -7412,15 +7412,15 @@ function renderFactionEventDetails(event) {
             <!-- Visual Bar Chart -->
             <div id="casualties-bar-chart" style="margin-bottom: 1rem; height: 30px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: flex;">
                 ${event.deaths_a > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: ${(event.deaths_a / event.best * 100)}%;" title="Country Forces: ${d3.format(",d")(event.deaths_a)} (${d3.format(".1%")(event.deaths_a / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: ${(event.deaths_a / event.best * 100)}%;" title="Side A: ${d3.format(",d")(event.deaths_a)} (${d3.format(".1%")(event.deaths_a / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_b > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); width: ${(event.deaths_b / event.best * 100)}%;" title="Opponent Forces: ${d3.format(",d")(event.deaths_b)} (${d3.format(".1%")(event.deaths_b / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); width: ${(event.deaths_b / event.best * 100)}%;" title="Side B: ${d3.format(",d")(event.deaths_b)} (${d3.format(".1%")(event.deaths_b / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
@@ -7433,57 +7433,52 @@ function renderFactionEventDetails(event) {
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 ${event.deaths_a > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #ef4444;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Side A: ${event.side_a || 'Unknown'}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_a)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_a / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Side A: ${event.side_a || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #ef4444;">${d3.format(",d")(event.deaths_a)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_b > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #3b82f6;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Side B: ${event.side_b || 'Unknown'}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_b)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_b / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Side B: ${event.side_b || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #3b82f6;">${d3.format(",d")(event.deaths_b)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #dc2626;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Civilian Casualties</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #dc2626; font-size: 0.9rem;">${d3.format(",d")(event.deaths_civilians)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_civilians / event.best)}</div>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #22c55e;">
+                    <span style="font-size: 0.8rem; color: #475569;">Civilians</span>
+                    <span style="font-weight: 600; color: #16a34a;">${d3.format(",d")(event.deaths_civilians)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #78716c;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #57534e 0%, #78716c 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Unknown Affiliation</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_unknown)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_unknown / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Unknown</span>
+                    <span style="font-weight: 600; color: #78716c;">${d3.format(",d")(event.deaths_unknown)}</span>
                 </div>
                 ` : ''}
             </div>
         </div>
         
+        <!-- Factions Involved -->
+        <div style="padding: 1rem; background: white; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+                Factions Involved
+            </h4>
+            ${event.side_a ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 4px; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_a}</span>
+                <span style="font-size: 0.75rem; color: #ef4444;">Side A</span>
+            </div>
+            ` : ''}
+            ${event.side_b ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(59, 130, 246, 0.05); border-radius: 4px;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_b}</span>
+                <span style="font-size: 0.75rem; color: #3b82f6;">Side B</span>
+            </div>
+            ` : ''}
+        </div>
+        
         ${event.source_headline || event.source_article ? `
-        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.1);">
+        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-top: 1rem; border: 1px solid rgba(59, 130, 246, 0.1);">
             <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
                 Source Information
             </h4>

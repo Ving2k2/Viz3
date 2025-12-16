@@ -399,13 +399,16 @@ function selectEvent(event) {
 }
 
 // ============================================================================
-// NAVIGATION
+// NAVIGATION (State-Driven - Filter Funnel Architecture)
 // ============================================================================
 
 function navigateBack() {
     if (viewState.mode === 'event') {
-        viewState.selectedEvent = null;
-        viewState.mode = 'country';
+        // Exit from event view to country view
+        viewStateManager.setState({
+            selectedEvent: null,
+            mode: 'country'
+        });
 
         bubblesGroup.selectAll(".event-bubble")
             .classed("selected-event", false)
@@ -417,6 +420,7 @@ function navigateBack() {
     }
 
     if (viewState.mode === 'country') {
+        // Use state-driven return to world view
         returnToWorldView();
         return true;
     }
@@ -425,10 +429,14 @@ function navigateBack() {
 }
 
 function returnToWorldView() {
-    viewState.mode = 'world';
-    viewState.selectedCountryName = null;
-    viewState.selectedCountryData = null;
-    viewState.selectedEvent = null;
+    // Use viewStateManager's resetToGlobal for state-driven approach
+    viewStateManager.setState({
+        mode: 'world',
+        selectedCountryName: null,
+        selectedCountryData: null,
+        selectedEvent: null,
+        selectedFaction: null  // Clear faction filter when returning to world
+    });
 
     // Reset zoom
     svg.transition()
@@ -469,6 +477,22 @@ function returnToWorldView() {
 
 function setupBackButton() {
     d3.select("#reset-zoom").on("click", () => navigateBack());
+}
+
+// Subscribe to RENDER_REQUIRED events for automatic UI updates
+if (typeof viewStateManager !== 'undefined' && viewStateManager.on) {
+    viewStateManager.on(VIEW_EVENTS.RENDER_REQUIRED, (data) => {
+        console.log('🔄 global.js: Handling RENDER_REQUIRED', data.changedKeys);
+
+        // Auto-update UI based on state changes
+        if (data.newState.mode === 'world') {
+            updateGlobalPanel();
+            renderTopCountriesList();
+        } else if (data.newState.mode === 'country') {
+            updateCountryPanel();
+            updateDashboardUI();
+        }
+    });
 }
 
 // ============================================================================
@@ -1207,7 +1231,7 @@ function renderEventDetailsView(event) {
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
@@ -1231,9 +1255,9 @@ function renderEventDetailsView(event) {
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #dc2626;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #22c55e;">
                     <span style="font-size: 0.8rem; color: #475569;">Civilians</span>
-                    <span style="font-weight: 600; color: #dc2626;">${d3.format(",d")(event.deaths_civilians)}</span>
+                    <span style="font-weight: 600; color: #16a34a;">${d3.format(",d")(event.deaths_civilians)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
