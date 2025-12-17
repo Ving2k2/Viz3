@@ -5,7 +5,7 @@
     "avg": 1823.857142857143,
     "trend": 3872,
     "total": 63835,
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "region": "Americas",
@@ -13,7 +13,7 @@
     "avg": 1255.6857142857143,
     "trend": 3909.2,
     "total": 43949,
-    "color": "#2ca02c"
+    "color": "#9b59b6"
   },
   {
     "region": "Asia",
@@ -21,7 +21,7 @@
     "avg": 2727.057142857143,
     "trend": 4305.6,
     "total": 95447,
-    "color": "#ff7f0e"
+    "color": "#f39c12"
   },
   {
     "region": "Europe",
@@ -29,7 +29,7 @@
     "avg": 1070.942857142857,
     "trend": 3709.4,
     "total": 37483,
-    "color": "#9467bd"
+    "color": "#3498db"
   },
   {
     "region": "Middle East",
@@ -37,6 +37,6 @@
     "avg": 3325.3714285714286,
     "trend": 2561.2,
     "total": 116388,
-    "color": "#d62728"
+    "color": "#1abc9c"
   }
 ]

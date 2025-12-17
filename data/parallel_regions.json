@@ -16,11 +16,11 @@
     "Middle East"
   ],
   "regionColors": {
-    "Africa": "#1f77b4",
-    "Americas": "#2ca02c",
-    "Asia": "#ff7f0e",
-    "Europe": "#9467bd",
-    "Middle East": "#d62728"
+    "Africa": "#e74c3c",
+    "Americas": "#9b59b6",
+    "Asia": "#f39c12",
+    "Europe": "#3498db",
+    "Middle East": "#1abc9c"
   },
   "data": [
     {
@@ -34,7 +34,7 @@
         2494,
         4111
       ],
-      "color": "#1f77b4"
+      "color": "#e74c3c"
     },
     {
       "region": "Americas",
@@ -47,7 +47,7 @@
         976,
         4423
       ],
-      "color": "#2ca02c"
+      "color": "#9b59b6"
     },
     {
       "region": "Asia",
@@ -60,7 +60,7 @@
         4029,
         4013
       ],
-      "color": "#ff7f0e"
+      "color": "#f39c12"
     },
     {
       "region": "Europe",
@@ -73,7 +73,7 @@
         447,
         4580
       ],
-      "color": "#9467bd"
+      "color": "#3498db"
     },
     {
       "region": "Middle East",
@@ -86,7 +86,7 @@
         8235,
         2359
       ],
-      "color": "#d62728"
+      "color": "#1abc9c"
     }
   ],
   "maxValue": 10587

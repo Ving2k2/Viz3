@@ -3,120 +3,120 @@
     "name": "Rwanda",
     "value": 794116,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Ethiopia",
     "value": 500015,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Syria",
     "value": 409695,
     "region": "Middle East",
-    "color": "#d62728"
+    "color": "#1abc9c"
   },
   {
     "name": "Afghanistan",
     "value": 317440,
     "region": "Asia",
-    "color": "#ff7f0e"
+    "color": "#f39c12"
   },
   {
     "name": "Ukraine",
     "value": 176952,
     "region": "Europe",
-    "color": "#9467bd"
+    "color": "#3498db"
   },
   {
     "name": "DR Congo (Zaire)",
     "value": 133972,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Mexico",
     "value": 130013,
     "region": "Americas",
-    "color": "#2ca02c"
+    "color": "#9b59b6"
   },
   {
     "name": "Iraq",
     "value": 126832,
     "region": "Middle East",
-    "color": "#d62728"
+    "color": "#1abc9c"
   },
   {
     "name": "Sudan",
     "value": 106336,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Nigeria",
     "value": 70652,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Yemen (North Yemen)",
     "value": 66789,
     "region": "Middle East",
-    "color": "#d62728"
+    "color": "#1abc9c"
   },
   {
     "name": "Sri Lanka",
     "value": 65628,
     "region": "Asia",
-    "color": "#ff7f0e"
+    "color": "#f39c12"
   },
   {
     "name": "Bosnia-Herzegovina",
     "value": 63535,
     "region": "Europe",
-    "color": "#9467bd"
+    "color": "#3498db"
   },
   {
     "name": "Somalia",
     "value": 62061,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "India",
     "value": 60469,
     "region": "Asia",
-    "color": "#ff7f0e"
+    "color": "#f39c12"
   },
   {
     "name": "Burundi",
     "value": 50822,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   },
   {
     "name": "Pakistan",
     "value": 45304,
     "region": "Asia",
-    "color": "#ff7f0e"
+    "color": "#f39c12"
   },
   {
     "name": "Colombia",
     "value": 44611,
     "region": "Americas",
-    "color": "#2ca02c"
+    "color": "#9b59b6"
   },
   {
     "name": "Israel",
     "value": 36730,
     "region": "Middle East",
-    "color": "#d62728"
+    "color": "#1abc9c"
   },
   {
     "name": "Angola",
     "value": 33309,
     "region": "Africa",
-    "color": "#1f77b4"
+    "color": "#e74c3c"
   }
 ]

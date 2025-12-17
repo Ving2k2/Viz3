@@ -47,13 +47,13 @@ const COLORS = {
         900: '#111827'
     },
 
-    // Region colors - categorical, distinguishable (D3 category10 inspired)
+    // Region colors - categorical, distinguishable (Unified Warm Palette)
     regions: {
-        'Africa': '#1f77b4',      // Blue
-        'Americas': '#2ca02c',    // Green
-        'Asia': '#ff7f0e',        // Orange
-        'Europe': '#9467bd',      // Purple
-        'Middle East': '#d62728'  // Red
+        'Africa': '#e74c3c',      // Red
+        'Americas': '#9b59b6',    // Purple
+        'Asia': '#f39c12',        // Orange-Yellow
+        'Europe': '#3498db',      // Blue
+        'Middle East': '#1abc9c'  // Teal
     },
 
     // Violence type colors - distinct categories

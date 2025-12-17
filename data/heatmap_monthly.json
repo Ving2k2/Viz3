@@ -60,11 +60,11 @@
   ],
   "regionColors": {
     "All": "#6b7280",
-    "Africa": "#1f77b4",
-    "Americas": "#2ca02c",
-    "Asia": "#ff7f0e",
-    "Europe": "#9467bd",
-    "Middle East": "#d62728"
+    "Africa": "#e74c3c",
+    "Americas": "#9b59b6",
+    "Asia": "#f39c12",
+    "Europe": "#3498db",
+    "Middle East": "#1abc9c"
   },
   "data": {
     "All": [

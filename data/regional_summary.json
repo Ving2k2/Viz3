@@ -1,7 +1,7 @@
 [
   {
     "region": "Africa",
-    "color": "#1f77b4",
+    "color": "#e74c3c",
     "totalEvents": 63835,
     "totalCasualties": 2004179,
     "avgCasualtiesPerEvent": 31.39624030704159,
@@ -40,7 +40,7 @@
   },
   {
     "region": "Americas",
-    "color": "#2ca02c",
+    "color": "#9b59b6",
     "totalEvents": 43949,
     "totalCasualties": 219553,
     "avgCasualtiesPerEvent": 4.995631299915812,
@@ -79,7 +79,7 @@
   },
   {
     "region": "Asia",
-    "color": "#ff7f0e",
+    "color": "#f39c12",
     "totalEvents": 95447,
     "totalCasualties": 585524,
     "avgCasualtiesPerEvent": 6.134545873626201,
@@ -118,7 +118,7 @@
   },
   {
     "region": "Europe",
-    "color": "#9467bd",
+    "color": "#3498db",
     "totalEvents": 37483,
     "totalCasualties": 297158,
     "avgCasualtiesPerEvent": 7.927807272630259,
@@ -157,7 +157,7 @@
   },
   {
     "region": "Middle East",
-    "color": "#d62728",
+    "color": "#1abc9c",
     "totalEvents": 116388,
     "totalCasualties": 689829,
     "avgCasualtiesPerEvent": 5.926977007938963,

@@ -44,16 +44,16 @@
     "Middle East"
   ],
   "regionColors": {
-    "Africa": "#1f77b4",
-    "Americas": "#2ca02c",
-    "Asia": "#ff7f0e",
-    "Europe": "#9467bd",
-    "Middle East": "#d62728"
+    "Africa": "#e74c3c",
+    "Americas": "#9b59b6",
+    "Asia": "#f39c12",
+    "Europe": "#3498db",
+    "Middle East": "#1abc9c"
   },
   "data": [
     {
       "region": "Africa",
-      "color": "#1f77b4",
+      "color": "#e74c3c",
       "yearCounts": [
         {
           "year": 1989,
@@ -200,7 +200,7 @@
     },
     {
       "region": "Americas",
-      "color": "#2ca02c",
+      "color": "#9b59b6",
       "yearCounts": [
         {
           "year": 1989,
@@ -347,7 +347,7 @@
     },
     {
       "region": "Asia",
-      "color": "#ff7f0e",
+      "color": "#f39c12",
       "yearCounts": [
         {
           "year": 1989,
@@ -494,7 +494,7 @@
     },
     {
       "region": "Europe",
-      "color": "#9467bd",
+      "color": "#3498db",
       "yearCounts": [
         {
           "year": 1989,
@@ -641,7 +641,7 @@
     },
     {
       "region": "Middle East",
-      "color": "#d62728",
+      "color": "#1abc9c",
       "yearCounts": [
         {
           "year": 1989,

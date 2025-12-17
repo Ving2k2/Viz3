@@ -48,11 +48,11 @@ function parseCSV(content) {
 
 // Configuration
 const REGION_COLORS = {
-    'Africa': '#002D40',
-    'Americas': '#991332',
-    'Asia': '#FF7747',
-    'Europe': '#FFC76E',
-    'Middle East': '#0097AB'
+    'Africa': '#e74c3c',
+    'Americas': '#9b59b6',
+    'Asia': '#f39c12',
+    'Europe': '#3498db',
+    'Middle East': '#1abc9c'
 };
 
 const VIOLENCE_TYPE_INFO = {

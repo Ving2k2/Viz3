@@ -64,6 +64,13 @@ function initializeMap() {
         .on("zoom", (event) => {
             container.attr("transform", event.transform);
             viewState.zoomScale = event.transform.k;
+            viewState.zoomTransform = event.transform;
+
+            // Update canvas transform for bubble positioning
+            if (canvasBubbleRenderer.canvas) {
+                canvasBubbleRenderer.updateTransform(event.transform);
+            }
+
             debouncedZoomUpdate();
         });
 
@@ -1586,24 +1593,48 @@ function drawFactionBubbles(events) {
         .domain([0, maxCasualties])
         .range([3 / zoomFactor, 20 / zoomFactor]);
 
-    // Initialize canvas if needed
+    // ALWAYS destroy and reinitialize canvas to ensure correct projection
     const mapSection = document.querySelector('.map-section');
-    if (!canvasBubbleRenderer.canvas) {
-        canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
 
-        // Set event handlers
-        canvasBubbleRenderer.onClick = (event, bubble) => {
-            selectEvent(bubble.data);
-        };
-
-        canvasBubbleRenderer.onHover = (event, bubble) => {
-            showEventTooltipGraph(event, bubble.data);
-        };
-
-        canvasBubbleRenderer.onHoverEnd = () => {
-            hideEventTooltipGraph();
-        };
+    // Destroy existing canvas
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
     }
+
+    // Reinitialize with current dimensions and projection
+    canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
+
+    // Set event handlers
+    canvasBubbleRenderer.onClick = (event, bubble) => {
+        selectFactionEvent(bubble.data);
+    };
+
+    canvasBubbleRenderer.onHover = (event, bubble) => {
+        showEventTooltipGraph(event, bubble.data);
+    };
+
+    canvasBubbleRenderer.onHoverEnd = () => {
+        hideEventTooltipGraph();
+    };
+
+    // Handle click on empty canvas area - exit event detail view
+    canvasBubbleRenderer.onEmptyClick = (event) => {
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            canvasBubbleRenderer.clearSelection();
+
+            // Ensure mode is faction (not event)
+            viewState.mode = 'faction';
+
+            // Refresh faction view panels
+            const factionId = viewState.selectedFactionName;
+            const factionEvents = viewState.selectedFactionData;
+            if (factionId && factionEvents) {
+                const factionData = { id: factionId };
+                displayFactionCharts(factionData, factionEvents);
+            }
+        }
+    };
 
     // Use progressive loading for large datasets (>500 events)
     if (eventsWithCoords.length > 500) {
@@ -4711,8 +4742,10 @@ let graphViewActive = false; // Moved from bottom of file
 let graphFilterState = {
     relationshipType: 'all', // 'all', 'allies', 'opponents'
     focusedFaction: null, // Currently focused faction ID
+    previousFocusedFaction: null, // Previously focused faction (for back navigation)
     lastClickedFaction: null, // For double-click detection
-    lastClickTime: 0 // Timestamp of last click
+    lastClickTime: 0, // Timestamp of last click
+    pendingFocusTimeout: null // Timeout for delayed focus mode
 };
 
 // Graph configuration for performance
@@ -4982,6 +5015,11 @@ function initAllFactionsGraph() {
         })
         .on("dblclick", (event, d) => {
             event.stopPropagation();
+            // Cancel pending focus mode from single click
+            if (graphFilterState.pendingFocusTimeout) {
+                clearTimeout(graphFilterState.pendingFocusTimeout);
+                graphFilterState.pendingFocusTimeout = null;
+            }
             navigateToFactionDetailView(d);
         });
 
@@ -6592,27 +6630,26 @@ function updateFocusedFactionGraph() {
 // ============================================================================
 
 function handleFactionClick(factionData, allNodes, linkSelection, nodeSelection, labelSelection) {
-    const now = Date.now();
-    const timeSinceLastClick = now - graphFilterState.lastClickTime;
-
-    // Check if this is a second click on the same faction (within 500ms = double-click)
-    if (graphFilterState.lastClickedFaction === factionData.id && timeSinceLastClick < 500) {
-        // Second click on same faction -> navigate to detail view
-        navigateToFactionDetailView(factionData);
-        return;
+    // Cancel any pending focus action
+    if (graphFilterState.pendingFocusTimeout) {
+        clearTimeout(graphFilterState.pendingFocusTimeout);
+        graphFilterState.pendingFocusTimeout = null;
     }
 
-    // First click or click on different faction -> activate focus mode
-    graphFilterState.lastClickedFaction = factionData.id;
-    graphFilterState.lastClickTime = now;
-
-    // Use the same focusOnFaction function that ranking list uses
-    focusOnFaction(factionData);
+    // Delay focus mode to allow dblclick to fire first
+    graphFilterState.pendingFocusTimeout = setTimeout(() => {
+        // First click → activate focus mode (delayed to allow dblclick to cancel)
+        graphFilterState.lastClickedFaction = factionData.id;
+        focusOnFaction(factionData);
+        graphFilterState.pendingFocusTimeout = null;
+    }, 250); // 250ms delay - if dblclick happens within this time, it will cancel the focus
 }
 
 // Navigate to faction detail view with map showing faction's conflicts
 function navigateToFactionDetailView(factionData) {
 
+    // Save previous focus state for back navigation
+    graphFilterState.previousFocusedFaction = graphConfig.focusMode ? graphFilterState.focusedFaction : null;
 
     // Get faction events
     const currentYear = +document.getElementById('year-slider').value;
@@ -6692,7 +6729,7 @@ function navigateToFactionDetailView(factionData) {
     // Update right panel with faction charts
     displayFactionCharts(factionData, factionEvents);
 
-    // Show reset button
+    // Show reset button with back navigation logic
     d3.select("#reset-zoom")
         .style("display", "block")
         .text("← Back")
@@ -6702,16 +6739,41 @@ function navigateToFactionDetailView(factionData) {
             if (graphContainer) graphContainer.style.display = 'block';
             d3.select(this).style("display", "none");
 
-            // Clear map bubbles
+            // Clear map bubbles (SVG)
             if (bubblesGroup) bubblesGroup.selectAll("*").remove();
+
+            // Destroy canvas renderer to properly clean up
+            if (canvasBubbleRenderer.canvas) {
+                canvasBubbleRenderer.destroy();
+            }
 
             // Reset map
             resetMapZoomForFaction();
 
-            // Restore graph view
-            const gSvg = d3.select("#graph-svg");
-            const nodes = gSvg.selectAll(".graph-node").data();
-            restoreLeftPanelContent(nodes);
+            // Check if we should return to a focus mode sub-graph
+            if (graphFilterState.previousFocusedFaction) {
+                // Return to previous focus mode sub-graph
+                const prevFactionId = graphFilterState.previousFocusedFaction;
+                graphFilterState.previousFocusedFaction = null;
+
+                // Find faction data for the previous focused faction
+                const fullData = buildAllFactionsData(null);
+                const prevFactionData = fullData.allFactions.get(prevFactionId);
+
+                if (prevFactionData) {
+                    focusOnFaction(prevFactionData);
+                } else {
+                    // Fallback to main graph if faction not found
+                    graphConfig.focusMode = false;
+                    graphFilterState.focusedFaction = null;
+                    initAllFactionsGraph();
+                }
+            } else {
+                // Return to main graph (all factions)
+                graphConfig.focusMode = false;
+                graphFilterState.focusedFaction = null;
+                initAllFactionsGraph();
+            }
 
             // Reset view state
             viewState.mode = 'world';
@@ -6849,45 +6911,89 @@ function resetMapZoomForFaction() {
     }
 }
 
-// Draw individual event bubbles for faction (country view level)
+// Draw individual event bubbles for faction (country view level) - Using Canvas
 function drawFactionEventBubbles(events, viewLevel) {
     const eventsWithCoords = events.filter(e => e.latitude != null && e.longitude != null);
-    if (eventsWithCoords.length === 0) return;
+
+    // Clear SVG bubbles
+    bubblesGroup.selectAll(".event-bubble").remove();
+
+    if (eventsWithCoords.length === 0) {
+        if (canvasBubbleRenderer.canvas) {
+            canvasBubbleRenderer.clear();
+        }
+        return;
+    }
 
     const maxCasualties = d3.max(eventsWithCoords, e => e.best) || 1;
     const zoomFactor = viewState.zoomScale || 1;
-    const baseRange = [3 / zoomFactor, 20 / zoomFactor];
 
     const radiusScale = d3.scaleSqrt()
         .domain([0, maxCasualties])
-        .range(baseRange);
+        .range([3 / zoomFactor, 20 / zoomFactor]);
 
-    bubblesGroup.selectAll(".event-bubble")
-        .data(eventsWithCoords, d => `${d.country}-${d.year}-${d.latitude}-${d.longitude}`)
-        .join(
-            enter => enter.append("circle")
-                .attr("class", "event-bubble")
-                .attr("cx", d => projection([d.longitude, d.latitude])[0])
-                .attr("cy", d => projection([d.longitude, d.latitude])[1])
-                .attr("r", 0)
-                .style("fill", d => TYPE_COLORS[d.type_of_violence_name] || "#ef4444")
-                .style("fill-opacity", 0.7)
-                .style("cursor", "pointer")
-                .on("click", (event, d) => {
-                    event.stopPropagation();
-                    selectFactionEvent(d);
-                })
-                .call(enter => enter.transition()
-                    .duration(600)
-                    .attr("r", d => radiusScale(d.best))),
-            update => update,
-            exit => exit.remove()
-        );
+    // ALWAYS destroy and reinitialize canvas to ensure correct projection
+    const mapSection = document.querySelector('.map-section');
 
-    // Add tooltips
-    bubblesGroup.selectAll(".event-bubble")
-        .append("title")
-        .text(d => `${d.country}\n${d.dyad_name || 'Conflict'}\n${d.year} • ${d.type_of_violence_name}\n${d3.format(",")(d.best)} casualties`);
+    // Destroy existing canvas
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
+    }
+
+    // Reinitialize with current dimensions and projection
+    canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
+
+    // Set event handlers
+    canvasBubbleRenderer.onClick = (event, bubble) => {
+        selectFactionEvent(bubble.data);
+    };
+
+    canvasBubbleRenderer.onHover = (event, bubble) => {
+        showEventTooltipGraph(event, bubble.data);
+    };
+
+    canvasBubbleRenderer.onHoverEnd = () => {
+        hideEventTooltipGraph();
+    };
+
+    // Handle click on empty canvas area - exit event detail view
+    canvasBubbleRenderer.onEmptyClick = (event) => {
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            canvasBubbleRenderer.clearSelection();
+
+            // Ensure mode is faction (not event)
+            viewState.mode = 'faction';
+
+            // Refresh faction view panels
+            const factionId = viewState.selectedFactionName;
+            const factionEvents = viewState.selectedFactionData;
+            if (factionId && factionEvents) {
+                const factionData = { id: factionId };
+                displayFactionCharts(factionData, factionEvents);
+            }
+        }
+    };
+
+    // Use progressive loading for large datasets (>500 events)
+    if (eventsWithCoords.length > 500) {
+        canvasBubbleRenderer.setBubblesProgressive(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    } else {
+        canvasBubbleRenderer.setBubbles(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    }
+
+    // Update transform to match current zoom
+    if (viewState.zoomTransform) {
+        canvasBubbleRenderer.updateTransform(viewState.zoomTransform);
+    }
 }
 
 // Draw country-level bubbles for faction (region/world view level)
@@ -7394,8 +7500,29 @@ function rebuildGraphWithFocus(nodes, links, focusedFaction) {
                 d.fx = null;
                 d.fy = null;
             }))
+        .on("click", (event, d) => {
+            event.stopPropagation();
+            // Cancel any pending focus action
+            if (graphFilterState.pendingFocusTimeout) {
+                clearTimeout(graphFilterState.pendingFocusTimeout);
+                graphFilterState.pendingFocusTimeout = null;
+            }
+            // Single click → delay focus mode (same as main graph)
+            if (d.id !== focusedFaction.id) {
+                graphFilterState.pendingFocusTimeout = setTimeout(() => {
+                    focusOnFaction(d);
+                    graphFilterState.pendingFocusTimeout = null;
+                }, 250);
+            }
+        })
         .on("dblclick", (event, d) => {
             event.stopPropagation();
+            // Cancel pending focus mode from single click
+            if (graphFilterState.pendingFocusTimeout) {
+                clearTimeout(graphFilterState.pendingFocusTimeout);
+                graphFilterState.pendingFocusTimeout = null;
+            }
+            // Double-click on any faction → Navigate to Faction Detail View
             navigateToFactionDetailView(d);
         });
 
@@ -7413,31 +7540,28 @@ function rebuildGraphWithFocus(nodes, links, focusedFaction) {
         .style("font-weight", d => d.id === focusedFaction.id ? "700" : "400")
         .text(d => d.id);
 
-    // Back button to return to normal view
-    const backBtn = graphSvg.append("g")
-        .attr("class", "focus-back-btn")
-        .attr("transform", "translate(20, 20)")
-        .style("cursor", "pointer")
+    // Function to go back to all factions view
+    const goBackToAll = () => {
+        graphConfig.focusMode = false;
+        graphFilterState.focusedFaction = null;
+        d3.select("#reset-zoom").style("display", "none");
+        initAllFactionsGraph();
+    };
+
+    // Click on empty area of graph → go back to all factions
+    graphSvg.on("click", (event) => {
+        // Only trigger if clicking directly on svg (not on nodes/links)
+        if (event.target === graphSvg.node()) {
+            goBackToAll();
+        }
+    });
+
+    // Use the existing #reset-zoom button in left panel
+    d3.select("#reset-zoom")
+        .style("display", "block")
         .on("click", () => {
-            graphConfig.focusMode = false;
-            graphFilterState.focusedFaction = null;
-            initAllFactionsGraph();
+            goBackToAll();
         });
-
-    backBtn.append("rect")
-        .attr("width", 120)
-        .attr("height", 35)
-        .attr("fill", "#3b82f6")
-        .attr("rx", 6);
-
-    backBtn.append("text")
-        .attr("x", 60)
-        .attr("y", 23)
-        .attr("text-anchor", "middle")
-        .attr("fill", "white")
-        .attr("font-size", "14px")
-        .attr("font-weight", "600")
-        .text("← Back to All");
 
     // Info box showing focused faction
     const infoBox = graphSvg.append("g")
@@ -7720,7 +7844,12 @@ function selectFactionEvent(event) {
 
     viewState.selectedEvent = event;
 
-    // Use requestAnimationFrame for visual updates
+    // Update canvas bubble selection (if using Canvas rendering)
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.selectBubble(event);
+    }
+
+    // Also update SVG bubbles (fallback for any SVG-rendered events)
     requestAnimationFrame(() => {
         const bubbles = bubblesGroup.selectAll(".event-bubble");
 
@@ -7737,10 +7866,34 @@ function selectFactionEvent(event) {
             .classed("unselected-event", true);
     });
 
-    // Render event details
-    requestAnimationFrame(() => {
-        renderFactionEventDetails(event);
-    });
+    // Zoom to event location to center it on screen
+    if (event.latitude && event.longitude && projection) {
+        const coords = projection([event.longitude, event.latitude]);
+        if (coords && !isNaN(coords[0]) && !isNaN(coords[1])) {
+            const scale = 15; // Zoom level for event focus
+            const translate = [mapWidth / 2 - scale * coords[0], mapHeight / 2 - scale * coords[1]];
+
+            svg.transition()
+                .duration(500)
+                .call(
+                    zoom.transform,
+                    d3.zoomIdentity.translate(translate[0], translate[1]).scale(scale)
+                );
+        }
+    }
+
+    // Render event details with optimized scheduling
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(() => {
+            renderFactionEventDetails(event);
+        }, { timeout: 100 });
+    } else {
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                renderFactionEventDetails(event);
+            });
+        }, 16);
+    }
 }
 
 // Render event details in right panel (matching global.js format exactly)
