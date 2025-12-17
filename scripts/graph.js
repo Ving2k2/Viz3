@@ -4715,6 +4715,12 @@ let graphFilterState = {
     lastClickTime: 0 // Timestamp of last click
 };
 
+// Graph configuration for performance
+let graphConfig = {
+    maxNodes: 30, // Default limit for initial render
+    focusMode: false // Whether we're showing a focused faction with all connections
+};
+
 // ============================================================================
 // UTILITY FUNCTIONS
 // ============================================================================
@@ -4732,7 +4738,7 @@ function splitEntities(str) {
 // BUILD ALL-FACTIONS DATA
 // ============================================================================
 
-function buildAllFactionsData() {
+function buildAllFactionsData(limit = null) {
     const currentYear = +document.getElementById('year-slider').value;
 
     // Get filtered countries - use cached data when possible
@@ -4835,8 +4841,16 @@ function buildAllFactionsData() {
         }
     }
 
-    // Original threshold: minimum 5 events
-    const nodes = Array.from(allFactions.values()).filter(n => n.participation >= 5);
+    // Original threshold: minimum 5 events, then sort by casualties
+    let nodes = Array.from(allFactions.values())
+        .filter(n => n.participation >= 5)
+        .sort((a, b) => b.casualties - a.casualties); // Sort by casualties DESC
+
+    // Apply limit if specified (for performance)
+    if (limit && limit > 0 && nodes.length > limit) {
+        nodes = nodes.slice(0, limit);
+    }
+
     const nodeIds = new Set(nodes.map(n => n.id));
 
     // Add radius - original sizing
@@ -4844,7 +4858,7 @@ function buildAllFactionsData() {
         n.radius = Math.max(8, Math.min(35, Math.sqrt(n.casualties) / 3));
     });
 
-    // Create links - ALL relationships
+    // Create links - only for nodes that exist in the limited set
     const links = [];
     for (const [key, rel] of factionRels.entries()) {
         if (rel.allied === 0 && rel.opposed === 0) continue;
@@ -4863,7 +4877,7 @@ function buildAllFactionsData() {
         });
     }
 
-    return { nodes, links };
+    return { nodes, links, allFactions, factionRels };
 }
 
 // ============================================================================
@@ -4881,8 +4895,9 @@ function initAllFactionsGraph() {
     // Clear map-view specific elements from left panel (e.g., regional breakdown bars)
     d3.select("#regional-bars").remove();
 
-    // Build data
-    const { nodes, links } = buildAllFactionsData();
+    // Build data with limit (unless in focus mode)
+    const nodeLimit = graphConfig.focusMode ? null : graphConfig.maxNodes;
+    const { nodes, links } = buildAllFactionsData(nodeLimit);
 
     // Create zoomable group
     const zoomGroup = graphSvg.append("g").attr("class", "zoom-group");
@@ -4990,7 +5005,7 @@ function initAllFactionsGraph() {
 
     filterBox.append("rect")
         .attr("width", 220)
-        .attr("height", 70)
+        .attr("height", 140) // Expanded height for node limit slider
         .attr("fill", "rgba(255, 255, 255, 0.95)")
         .attr("stroke", "#cbd5e1")
         .attr("stroke-width", 1)
@@ -5044,6 +5059,43 @@ function initAllFactionsGraph() {
     countries.forEach(c => {
         select.append("xhtml:option").attr("value", c).text(c);
     });
+
+    // Node limit slider
+    filterBox.append("text")
+        .attr("x", 10)
+        .attr("y", 85)
+        .attr("font-weight", "600")
+        .attr("font-size", "14px")
+        .text(`Max Nodes: ${graphConfig.maxNodes}`);
+
+    const nodeSliderLabel = filterBox.select("text:last-of-type");
+
+    const nodeSlider = filterBox.append("foreignObject")
+        .attr("x", 10)
+        .attr("y", 95)
+        .attr("width", 200)
+        .attr("height", 40);
+
+    nodeSlider.append("xhtml:input")
+        .attr("type", "range")
+        .attr("min", 10)
+        .attr("max", 100)
+        .attr("value", graphConfig.maxNodes)
+        .style("width", "100%")
+        .style("cursor", "pointer")
+        .on("input", function () {
+            const newLimit = +this.value;
+            graphConfig.maxNodes = newLimit;
+            // Update label
+            filterBox.selectAll("text").filter(function () {
+                return d3.select(this).text().startsWith("Max Nodes:");
+            }).text(`Max Nodes: ${newLimit}`);
+        })
+        .on("change", function () {
+            // Rebuild graph with new limit when slider is released
+            graphConfig.focusMode = false;
+            initAllFactionsGraph();
+        });
 
     // Legend
     const legend = graphSvg.append("g")
@@ -7214,24 +7266,235 @@ function clearFocusMode() {
 
 // Helper function to focus on a faction (called from ranking list)
 function focusOnFaction(factionData) {
-    const graphSvg = d3.select("#graph-svg");
+    // Build FULL data without limit to find all connections
+    const fullData = buildAllFactionsData(null); // No limit
 
-    // Get all nodes, links, and labels
-    const allNodes = graphSvg.selectAll(".graph-node").data();
-    const linkSelection = graphSvg.selectAll("path");
-    const nodeSelection = graphSvg.selectAll(".graph-node");
-    const labelSelection = graphSvg.selectAll(".graph-node-label");
+    // Find all connected faction IDs
+    const connectedIds = new Set([factionData.id]);
 
-    // Apply focus mode
-    applyFocusMode(factionData, allNodes, linkSelection, nodeSelection, labelSelection);
+    // Check all relationships from fullData
+    for (const [key, rel] of fullData.factionRels.entries()) {
+        if (rel.allied === 0 && rel.opposed === 0) continue;
 
-    // Update filter state
+        const [f1, f2] = key.split('|');
+        if (f1 === factionData.id && fullData.allFactions.has(f2)) {
+            connectedIds.add(f2);
+        }
+        if (f2 === factionData.id && fullData.allFactions.has(f1)) {
+            connectedIds.add(f1);
+        }
+    }
+
+    // Filter nodes to only include focused faction and its connections
+    const focusedNodes = fullData.nodes.filter(n => connectedIds.has(n.id));
+
+    // Create links for the focused set
+    const focusedNodeIds = new Set(focusedNodes.map(n => n.id));
+    const focusedLinks = [];
+    for (const [key, rel] of fullData.factionRels.entries()) {
+        if (rel.allied === 0 && rel.opposed === 0) continue;
+
+        const [f1, f2] = key.split('|');
+        if (!focusedNodeIds.has(f1) || !focusedNodeIds.has(f2)) continue;
+
+        focusedLinks.push({
+            source: f1,
+            target: f2,
+            type: rel.allied > rel.opposed ? 'ally' : 'enemy',
+            allied: rel.allied,
+            opposed: rel.opposed,
+            casualties: rel.cas,
+            value: Math.sqrt(rel.cas) / 5
+        });
+    }
+
+    // Set focus mode and rebuild graph with focused data
+    graphConfig.focusMode = true;
     graphFilterState.focusedFaction = factionData.id;
     graphFilterState.lastClickedFaction = factionData.id;
     graphFilterState.lastClickTime = Date.now();
 
-    // Zoom to faction and its connections
-    zoomToFaction(factionData, allNodes, linkSelection);
+    // Rebuild graph with focused nodes
+    rebuildGraphWithFocus(focusedNodes, focusedLinks, factionData);
+}
+
+// Rebuild graph with specific nodes/links for focus mode
+function rebuildGraphWithFocus(nodes, links, focusedFaction) {
+    const graphSvg = d3.select("#graph-svg");
+    const width = document.getElementById("graph-container").clientWidth;
+    const height = document.getElementById("graph-container").clientHeight;
+
+    graphSvg.selectAll("*").remove();
+
+    // Create zoomable group
+    const zoomGroup = graphSvg.append("g").attr("class", "zoom-group");
+
+    // PRE-POSITION NODES - centered around the focused faction
+    const centerX = width / 2;
+    const centerY = height / 2;
+
+    nodes.forEach((node, i) => {
+        if (node.id === focusedFaction.id) {
+            node.x = centerX;
+            node.y = centerY;
+        } else {
+            // Spread other nodes around the center
+            const angle = (i / nodes.length) * Math.PI * 2;
+            const radius = Math.min(width, height) / 4;
+            node.x = centerX + Math.cos(angle) * radius;
+            node.y = centerY + Math.sin(angle) * radius;
+        }
+    });
+
+    // FORCE SIMULATION
+    const simulation = d3.forceSimulation(nodes)
+        .force("link", d3.forceLink(links).id(d => d.id).distance(150).strength(0.2))
+        .force("charge", d3.forceManyBody().strength(-400))
+        .force("collision", d3.forceCollide().radius(d => d.radius + 30))
+        .force("center", d3.forceCenter(centerX, centerY))
+        .alpha(0.5)
+        .alphaDecay(0.02);
+
+    // Draw links
+    const linkGroup = zoomGroup.append("g").attr("class", "links-group");
+    const link = linkGroup.selectAll("path")
+        .data(links)
+        .join("path")
+        .attr("class", d => d.type === 'ally' ? 'graph-link-ally' : 'graph-link-enemy')
+        .attr("stroke", d => d.type === 'ally' ? '#22c55e' : '#ef4444')
+        .attr("stroke-width", d => Math.max(2, Math.sqrt(d.value) * 2))
+        .attr("stroke-opacity", 0.6)
+        .attr("fill", "none");
+
+    link.append("title")
+        .text(d => `${d.source.id || d.source} ↔ ${d.target.id || d.target}\n${d.allied} allied • ${d.opposed} opposed\n${d3.format(",d")(d.casualties)} casualties`);
+
+    // Draw nodes
+    const nodeGroup = zoomGroup.append("g").attr("class", "nodes-group");
+    const node = nodeGroup.selectAll("circle")
+        .data(nodes)
+        .join("circle")
+        .attr("class", "graph-node")
+        .attr("r", d => d.radius)
+        .attr("fill", d => d.id === focusedFaction.id ? '#fbbf24' : REGION_COLORS[d.region] || "#64748b")
+        .attr("stroke", d => d.id === focusedFaction.id ? '#f59e0b' : 'none')
+        .attr("stroke-width", d => d.id === focusedFaction.id ? 3 : 0)
+        .call(d3.drag()
+            .on("start", (event, d) => {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            })
+            .on("drag", (event, d) => {
+                d.fx = event.x;
+                d.fy = event.y;
+            })
+            .on("end", (event, d) => {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }))
+        .on("dblclick", (event, d) => {
+            event.stopPropagation();
+            navigateToFactionDetailView(d);
+        });
+
+    node.append("title")
+        .text(d => `${d.id}\nCountry: ${d.country}\n${d.participation} events\n${d3.format(",d")(d.casualties)} casualties`);
+
+    // Labels
+    const labelGroup = zoomGroup.append("g").attr("class", "labels-group");
+    labelGroup.selectAll("text")
+        .data(nodes)
+        .join("text")
+        .attr("class", "graph-node-label")
+        .attr("dy", -10)
+        .style("font-size", d => d.id === focusedFaction.id ? "13px" : "11px")
+        .style("font-weight", d => d.id === focusedFaction.id ? "700" : "400")
+        .text(d => d.id);
+
+    // Back button to return to normal view
+    const backBtn = graphSvg.append("g")
+        .attr("class", "focus-back-btn")
+        .attr("transform", "translate(20, 20)")
+        .style("cursor", "pointer")
+        .on("click", () => {
+            graphConfig.focusMode = false;
+            graphFilterState.focusedFaction = null;
+            initAllFactionsGraph();
+        });
+
+    backBtn.append("rect")
+        .attr("width", 120)
+        .attr("height", 35)
+        .attr("fill", "#3b82f6")
+        .attr("rx", 6);
+
+    backBtn.append("text")
+        .attr("x", 60)
+        .attr("y", 23)
+        .attr("text-anchor", "middle")
+        .attr("fill", "white")
+        .attr("font-size", "14px")
+        .attr("font-weight", "600")
+        .text("← Back to All");
+
+    // Info box showing focused faction
+    const infoBox = graphSvg.append("g")
+        .attr("class", "focus-info")
+        .attr("transform", `translate(${width - 240}, 20)`);
+
+    infoBox.append("rect")
+        .attr("width", 220)
+        .attr("height", 80)
+        .attr("fill", "rgba(255, 255, 255, 0.95)")
+        .attr("stroke", "#fbbf24")
+        .attr("stroke-width", 2)
+        .attr("rx", 6);
+
+    infoBox.append("text")
+        .attr("x", 10)
+        .attr("y", 25)
+        .attr("font-weight", "600")
+        .attr("font-size", "14px")
+        .text("Focused Faction:");
+
+    infoBox.append("text")
+        .attr("x", 10)
+        .attr("y", 50)
+        .attr("font-size", "12px")
+        .attr("fill", "#1e293b")
+        .text(focusedFaction.id.length > 25 ? focusedFaction.id.substring(0, 22) + "..." : focusedFaction.id);
+
+    infoBox.append("text")
+        .attr("x", 10)
+        .attr("y", 70)
+        .attr("font-size", "11px")
+        .attr("fill", "#64748b")
+        .text(`${nodes.length} connected factions`);
+
+    // Zoom
+    const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (event) => zoomGroup.attr("transform", event.transform));
+    graphSvg.call(zoom);
+
+    // SIMULATION TICK
+    simulation.on("tick", () => {
+        linkGroup.selectAll("path")
+            .attr("d", d => `M${d.source.x},${d.source.y}L${d.target.x},${d.target.y}`);
+
+        nodeGroup.selectAll("circle")
+            .attr("cx", d => d.x)
+            .attr("cy", d => d.y);
+
+        labelGroup.selectAll("text")
+            .attr("x", d => d.x)
+            .attr("y", d => d.y);
+    });
+
+    // Update faction info in left panel
+    displayFactionInfo(focusedFaction, nodes, links);
 }
 
 // Zoom and center the graph on a specific faction and its connections

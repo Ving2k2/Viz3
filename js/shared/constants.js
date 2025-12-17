@@ -2,7 +2,7 @@
 // CONSTANTS - Shared constants for conflict visualization
 // ============================================================================
 
-const CSV_FILE_PATH = 'GEDEvent_v25_1.csv';
+const CSV_FILE_PATH = '../GEDEvent_v25_1.csv';
 
 // Violence type mapping
 const TYPE_MAP = {
