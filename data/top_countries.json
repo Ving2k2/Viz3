@@ -1,0 +1,242 @@
+[
+  {
+    "country": "Syria",
+    "events": 86754,
+    "casualties": 409695,
+    "avgCasualties": 4.722491181962791,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Afghanistan",
+    "events": 42041,
+    "casualties": 317440,
+    "avgCasualties": 7.550724292952118,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Ukraine",
+    "events": 21178,
+    "casualties": 176952,
+    "avgCasualties": 8.355463216545472,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "country": "Mexico",
+    "events": 18867,
+    "casualties": 130013,
+    "avgCasualties": 6.891026660306355,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "India",
+    "events": 17763,
+    "casualties": 60469,
+    "avgCasualties": 3.4042110003940778,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Colombia",
+    "events": 14223,
+    "casualties": 44611,
+    "avgCasualties": 3.136539408001125,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "Bosnia-Herzegovina",
+    "events": 9340,
+    "casualties": 63535,
+    "avgCasualties": 6.802462526766595,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "country": "Iraq",
+    "events": 9170,
+    "casualties": 126832,
+    "avgCasualties": 13.831188658669575,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "DR Congo (Zaire)",
+    "events": 8118,
+    "casualties": 133972,
+    "avgCasualties": 16.503079576250308,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Myanmar (Burma)",
+    "events": 7380,
+    "casualties": 28664,
+    "avgCasualties": 3.884010840108401,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Pakistan",
+    "events": 7168,
+    "casualties": 45304,
+    "avgCasualties": 6.3203125,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Nigeria",
+    "events": 6928,
+    "casualties": 70652,
+    "avgCasualties": 10.198036951501155,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Turkey",
+    "events": 6917,
+    "casualties": 32041,
+    "avgCasualties": 4.632210495879717,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Brazil",
+    "events": 6870,
+    "casualties": 18373,
+    "avgCasualties": 2.6743813682678312,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "Somalia",
+    "events": 6694,
+    "casualties": 62061,
+    "avgCasualties": 9.271138332835376,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Nepal",
+    "events": 5655,
+    "casualties": 12356,
+    "avgCasualties": 2.184969053934571,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Yemen (North Yemen)",
+    "events": 5261,
+    "casualties": 66789,
+    "avgCasualties": 12.695114997148831,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Israel",
+    "events": 4978,
+    "casualties": 36730,
+    "avgCasualties": 7.378465247087184,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Sri Lanka",
+    "events": 4581,
+    "casualties": 65628,
+    "avgCasualties": 14.326129666011788,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Ethiopia",
+    "events": 4520,
+    "casualties": 500015,
+    "avgCasualties": 110.62278761061947,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Philippines",
+    "events": 4287,
+    "casualties": 21309,
+    "avgCasualties": 4.970608817354794,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Algeria",
+    "events": 4178,
+    "casualties": 21244,
+    "avgCasualties": 5.084729535662997,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Russia (Soviet Union)",
+    "events": 3886,
+    "casualties": 25881,
+    "avgCasualties": 6.660061760164694,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "country": "Sudan",
+    "events": 3851,
+    "casualties": 106336,
+    "avgCasualties": 27.612568164113217,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Burundi",
+    "events": 3095,
+    "casualties": 50822,
+    "avgCasualties": 16.420678513731826,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "South Africa",
+    "events": 2893,
+    "casualties": 5608,
+    "avgCasualties": 1.938472174213619,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Thailand",
+    "events": 2806,
+    "casualties": 4164,
+    "avgCasualties": 1.4839629365645046,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Rwanda",
+    "events": 2602,
+    "casualties": 794116,
+    "avgCasualties": 305.1944657955419,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Mali",
+    "events": 2126,
+    "casualties": 15805,
+    "avgCasualties": 7.4341486359360305,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Angola",
+    "events": 2098,
+    "casualties": 33309,
+    "avgCasualties": 15.876549094375596,
+    "region": "Africa",
+    "color": "#1f77b4"
+  }
+]

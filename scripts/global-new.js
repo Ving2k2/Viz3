@@ -77,6 +77,8 @@ function returnToWorldView() {
     viewState.selectedEvent = null;
     viewState.selectedFaction = null;
     viewState.selectedRegion = null;
+    viewState.selectedViolenceType = null;
+    viewState.selectedConflictType = null;
 
     // Reset zoom
     svg.transition()
@@ -531,10 +533,8 @@ function drawEventBubbles() {
 
     const currentYear = +document.getElementById('year-slider').value;
     let events = viewState.selectedCountryData.eventsWithCoords || viewState.selectedCountryData.events || [];
-    console.log('[DEBUG] drawEventBubbles - currentYear:', currentYear, 'total events before filter:', events.length);
 
     events = events.filter(e => e.year <= currentYear && e.latitude && e.longitude);
-    console.log('[DEBUG] drawEventBubbles - events after year filter:', events.length);
 
     // Apply violence type filter
     if (viewState.selectedViolenceType) {
@@ -607,7 +607,6 @@ function drawEventBubbles() {
     };
 
     // Use progressive loading for large datasets (>500 events)
-    console.log('[DEBUG] Setting canvas bubbles, count:', events.length);
     if (events.length > 500) {
         canvasBubbleRenderer.setBubblesProgressive(events, {
             type: 'event',

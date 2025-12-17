@@ -537,6 +537,11 @@ function drawIndividualEventBubbles() {
         events = events.filter(e => e.type_of_violence_name === viewState.selectedConflictType);
     }
 
+    // Apply violence type filter (for consistency with global-new.js)
+    if (viewState.selectedViolenceType) {
+        events = events.filter(e => e.type_of_violence_name === viewState.selectedViolenceType);
+    }
+
     // Apply faction filter if active
     if (viewState.selectedFaction) {
         events = events.filter(e => {
@@ -1026,6 +1031,31 @@ function findCountryFeature(countryName) {
 
 function handleCountryClick(event, d) {
     event.stopPropagation();
+
+    // If already in country view, clicking on map clears filters and event selection
+    if (viewState.mode === 'country') {
+        // Clear any selected event
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            bubblesGroup.selectAll(".event-bubble")
+                .classed("selected-event", false)
+                .classed("unselected-event", false);
+        }
+
+        // Clear filters
+        const hadFilters = viewState.selectedViolenceType || viewState.selectedFaction || viewState.selectedConflictType;
+        viewState.selectedViolenceType = null;
+        viewState.selectedFaction = null;
+        viewState.selectedConflictType = null;
+
+        // Refresh if we cleared something
+        if (hadFilters || viewState.selectedEvent) {
+            drawIndividualEventBubbles();
+            updateLeftPanel();
+            updateAllCharts();
+        }
+        return;
+    }
 
     // In faction view mode, handle differently - zoom to country and show faction events
     if (viewState.mode === 'faction' || viewState.selectedFactionName) {
@@ -4373,6 +4403,7 @@ function returnToWorldView() {
     viewState.selectedEvent = null;
     viewState.selectedRegion = null;
     viewState.selectedViolenceType = null;
+    viewState.selectedFaction = null;
 
     // Hide reset button
     d3.select("#reset-zoom").style("display", "none");

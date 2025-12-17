@@ -1,0 +1,37 @@
+[
+  {
+    "region": "Africa",
+    "stateBased": 31120,
+    "nonState": 10063,
+    "oneSided": 22652,
+    "color": "#1f77b4"
+  },
+  {
+    "region": "Americas",
+    "stateBased": 6942,
+    "nonState": 26062,
+    "oneSided": 10945,
+    "color": "#2ca02c"
+  },
+  {
+    "region": "Asia",
+    "stateBased": 78393,
+    "nonState": 2163,
+    "oneSided": 14891,
+    "color": "#ff7f0e"
+  },
+  {
+    "region": "Europe",
+    "stateBased": 35992,
+    "nonState": 454,
+    "oneSided": 1037,
+    "color": "#9467bd"
+  },
+  {
+    "region": "Middle East",
+    "stateBased": 97922,
+    "nonState": 11188,
+    "oneSided": 7278,
+    "color": "#d62728"
+  }
+]

@@ -1,0 +1,47 @@
+[
+  {
+    "label": "1-5",
+    "count": 256330,
+    "totalCasualties": 503270
+  },
+  {
+    "label": "6-10",
+    "count": 34094,
+    "totalCasualties": 257710
+  },
+  {
+    "label": "11-25",
+    "count": 24199,
+    "totalCasualties": 387322
+  },
+  {
+    "label": "26-50",
+    "count": 8337,
+    "totalCasualties": 296403
+  },
+  {
+    "label": "51-100",
+    "count": 3443,
+    "totalCasualties": 244033
+  },
+  {
+    "label": "101-250",
+    "count": 1601,
+    "totalCasualties": 251498
+  },
+  {
+    "label": "251-500",
+    "count": 522,
+    "totalCasualties": 184315
+  },
+  {
+    "label": "501-1000",
+    "count": 251,
+    "totalCasualties": 184220
+  },
+  {
+    "label": "1000+",
+    "count": 249,
+    "totalCasualties": 1487472
+  }
+]

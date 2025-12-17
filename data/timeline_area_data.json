@@ -1,0 +1,1539 @@
+{
+  "years": [
+    1989,
+    1990,
+    1991,
+    1992,
+    1993,
+    1994,
+    1995,
+    1996,
+    1997,
+    1998,
+    1999,
+    2000,
+    2001,
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "regions": [
+    "All",
+    "Africa",
+    "Americas",
+    "Asia",
+    "Europe",
+    "Middle East"
+  ],
+  "regionColors": {
+    "All": "#6b7280",
+    "Africa": "#1f77b4",
+    "Americas": "#2ca02c",
+    "Asia": "#ff7f0e",
+    "Europe": "#9467bd",
+    "Middle East": "#d62728"
+  },
+  "data": {
+    "All": [
+      {
+        "year": 1989,
+        "events": 2624,
+        "casualties": 67711,
+        "low": 60991,
+        "high": 108463
+      },
+      {
+        "year": 1990,
+        "events": 3202,
+        "casualties": 95744,
+        "low": 91409,
+        "high": 120398
+      },
+      {
+        "year": 1991,
+        "events": 2870,
+        "casualties": 84397,
+        "low": 81481,
+        "high": 111747
+      },
+      {
+        "year": 1992,
+        "events": 7333,
+        "casualties": 76109,
+        "low": 71697,
+        "high": 110545
+      },
+      {
+        "year": 1993,
+        "events": 6828,
+        "casualties": 74221,
+        "low": 69616,
+        "high": 134313
+      },
+      {
+        "year": 1994,
+        "events": 7569,
+        "casualties": 824156,
+        "low": 396456,
+        "high": 1703382
+      },
+      {
+        "year": 1995,
+        "events": 4697,
+        "casualties": 62841,
+        "low": 59305,
+        "high": 90608
+      },
+      {
+        "year": 1996,
+        "events": 3294,
+        "casualties": 88000,
+        "low": 75826,
+        "high": 113891
+      },
+      {
+        "year": 1997,
+        "events": 3007,
+        "casualties": 66474,
+        "low": 62380,
+        "high": 123226
+      },
+      {
+        "year": 1998,
+        "events": 3787,
+        "casualties": 61643,
+        "low": 56026,
+        "high": 86724
+      },
+      {
+        "year": 1999,
+        "events": 4412,
+        "casualties": 101106,
+        "low": 98493,
+        "high": 139025
+      },
+      {
+        "year": 2000,
+        "events": 5725,
+        "casualties": 94335,
+        "low": 91165,
+        "high": 114703
+      },
+      {
+        "year": 2001,
+        "events": 4363,
+        "casualties": 38332,
+        "low": 35737,
+        "high": 60444
+      },
+      {
+        "year": 2002,
+        "events": 7467,
+        "casualties": 42050,
+        "low": 39195,
+        "high": 56660
+      },
+      {
+        "year": 2003,
+        "events": 6423,
+        "casualties": 40957,
+        "low": 39685,
+        "high": 77446
+      },
+      {
+        "year": 2004,
+        "events": 7533,
+        "casualties": 36825,
+        "low": 35056,
+        "high": 72007
+      },
+      {
+        "year": 2005,
+        "events": 6125,
+        "casualties": 21041,
+        "low": 20256,
+        "high": 26139
+      },
+      {
+        "year": 2006,
+        "events": 5604,
+        "casualties": 28354,
+        "low": 26941,
+        "high": 39240
+      },
+      {
+        "year": 2007,
+        "events": 6927,
+        "casualties": 29113,
+        "low": 27359,
+        "high": 37142
+      },
+      {
+        "year": 2008,
+        "events": 6715,
+        "casualties": 39991,
+        "low": 38897,
+        "high": 50344
+      },
+      {
+        "year": 2009,
+        "events": 7146,
+        "casualties": 50611,
+        "low": 46831,
+        "high": 61142
+      },
+      {
+        "year": 2010,
+        "events": 7885,
+        "casualties": 34140,
+        "low": 32727,
+        "high": 43372
+      },
+      {
+        "year": 2011,
+        "events": 7715,
+        "casualties": 41251,
+        "low": 39701,
+        "high": 52455
+      },
+      {
+        "year": 2012,
+        "events": 18540,
+        "casualties": 90759,
+        "low": 87511,
+        "high": 104547
+      },
+      {
+        "year": 2013,
+        "events": 24521,
+        "casualties": 115131,
+        "low": 109059,
+        "high": 133994
+      },
+      {
+        "year": 2014,
+        "events": 25940,
+        "casualties": 151630,
+        "low": 144737,
+        "high": 172834
+      },
+      {
+        "year": 2015,
+        "events": 19875,
+        "casualties": 131906,
+        "low": 125905,
+        "high": 150429
+      },
+      {
+        "year": 2016,
+        "events": 17374,
+        "casualties": 116539,
+        "low": 110827,
+        "high": 135972
+      },
+      {
+        "year": 2017,
+        "events": 16304,
+        "casualties": 113445,
+        "low": 108890,
+        "high": 129247
+      },
+      {
+        "year": 2018,
+        "events": 13510,
+        "casualties": 89223,
+        "low": 83547,
+        "high": 103623
+      },
+      {
+        "year": 2019,
+        "events": 13841,
+        "casualties": 78295,
+        "low": 72482,
+        "high": 92016
+      },
+      {
+        "year": 2020,
+        "events": 13432,
+        "casualties": 104194,
+        "low": 87048,
+        "high": 125457
+      },
+      {
+        "year": 2021,
+        "events": 17254,
+        "casualties": 234846,
+        "low": 218216,
+        "high": 265867
+      },
+      {
+        "year": 2022,
+        "events": 20774,
+        "casualties": 309636,
+        "low": 273771,
+        "high": 411812
+      },
+      {
+        "year": 2023,
+        "events": 26486,
+        "casualties": 161237,
+        "low": 135504,
+        "high": 249399
+      }
+    ],
+    "Africa": [
+      {
+        "year": 1989,
+        "events": 913,
+        "casualties": 41079,
+        "low": 41071,
+        "high": 60607
+      },
+      {
+        "year": 1990,
+        "events": 1303,
+        "casualties": 72865,
+        "low": 70247,
+        "high": 90032
+      },
+      {
+        "year": 1991,
+        "events": 916,
+        "casualties": 34097,
+        "low": 32133,
+        "high": 48184
+      },
+      {
+        "year": 1992,
+        "events": 1124,
+        "casualties": 18584,
+        "low": 17928,
+        "high": 40997
+      },
+      {
+        "year": 1993,
+        "events": 1919,
+        "casualties": 40994,
+        "low": 37625,
+        "high": 87059
+      },
+      {
+        "year": 1994,
+        "events": 3581,
+        "casualties": 791872,
+        "low": 365591,
+        "high": 1658736
+      },
+      {
+        "year": 1995,
+        "events": 1148,
+        "casualties": 20759,
+        "low": 18282,
+        "high": 34580
+      },
+      {
+        "year": 1996,
+        "events": 1067,
+        "casualties": 64638,
+        "low": 52751,
+        "high": 86347
+      },
+      {
+        "year": 1997,
+        "events": 1139,
+        "casualties": 47320,
+        "low": 45458,
+        "high": 98712
+      },
+      {
+        "year": 1998,
+        "events": 1654,
+        "casualties": 36139,
+        "low": 33517,
+        "high": 54629
+      },
+      {
+        "year": 1999,
+        "events": 1442,
+        "casualties": 75192,
+        "low": 73393,
+        "high": 98000
+      },
+      {
+        "year": 2000,
+        "events": 1254,
+        "casualties": 68253,
+        "low": 66627,
+        "high": 82072
+      },
+      {
+        "year": 2001,
+        "events": 857,
+        "casualties": 17007,
+        "low": 15140,
+        "high": 25806
+      },
+      {
+        "year": 2002,
+        "events": 1315,
+        "casualties": 22410,
+        "low": 21306,
+        "high": 32320
+      },
+      {
+        "year": 2003,
+        "events": 1141,
+        "casualties": 18990,
+        "low": 18260,
+        "high": 46963
+      },
+      {
+        "year": 2004,
+        "events": 1155,
+        "casualties": 17523,
+        "low": 16621,
+        "high": 47693
+      },
+      {
+        "year": 2005,
+        "events": 849,
+        "casualties": 5503,
+        "low": 5224,
+        "high": 7695
+      },
+      {
+        "year": 2006,
+        "events": 792,
+        "casualties": 7839,
+        "low": 7503,
+        "high": 14500
+      },
+      {
+        "year": 2007,
+        "events": 993,
+        "casualties": 6060,
+        "low": 5943,
+        "high": 8787
+      },
+      {
+        "year": 2008,
+        "events": 1005,
+        "casualties": 8456,
+        "low": 8349,
+        "high": 12218
+      },
+      {
+        "year": 2009,
+        "events": 1403,
+        "casualties": 12929,
+        "low": 12324,
+        "high": 15946
+      },
+      {
+        "year": 2010,
+        "events": 890,
+        "casualties": 7445,
+        "low": 7058,
+        "high": 11763
+      },
+      {
+        "year": 2011,
+        "events": 1584,
+        "casualties": 14243,
+        "low": 13511,
+        "high": 20176
+      },
+      {
+        "year": 2012,
+        "events": 1606,
+        "casualties": 11178,
+        "low": 10624,
+        "high": 15596
+      },
+      {
+        "year": 2013,
+        "events": 1634,
+        "casualties": 15547,
+        "low": 14244,
+        "high": 26115
+      },
+      {
+        "year": 2014,
+        "events": 2237,
+        "casualties": 24684,
+        "low": 22705,
+        "high": 34028
+      },
+      {
+        "year": 2015,
+        "events": 2170,
+        "casualties": 20807,
+        "low": 19991,
+        "high": 26933
+      },
+      {
+        "year": 2016,
+        "events": 2176,
+        "casualties": 16823,
+        "low": 15124,
+        "high": 23969
+      },
+      {
+        "year": 2017,
+        "events": 2359,
+        "casualties": 18742,
+        "low": 17932,
+        "high": 24360
+      },
+      {
+        "year": 2018,
+        "events": 2849,
+        "casualties": 15998,
+        "low": 14445,
+        "high": 19784
+      },
+      {
+        "year": 2019,
+        "events": 2916,
+        "casualties": 16015,
+        "low": 14114,
+        "high": 20093
+      },
+      {
+        "year": 2020,
+        "events": 3643,
+        "casualties": 42720,
+        "low": 40420,
+        "high": 49527
+      },
+      {
+        "year": 2021,
+        "events": 3946,
+        "casualties": 149325,
+        "low": 146092,
+        "high": 158524
+      },
+      {
+        "year": 2022,
+        "events": 4511,
+        "casualties": 188826,
+        "low": 186683,
+        "high": 202504
+      },
+      {
+        "year": 2023,
+        "events": 4344,
+        "casualties": 33317,
+        "low": 31504,
+        "high": 47924
+      }
+    ],
+    "Americas": [
+      {
+        "year": 1989,
+        "events": 447,
+        "casualties": 9450,
+        "low": 8757,
+        "high": 12342
+      },
+      {
+        "year": 1990,
+        "events": 476,
+        "casualties": 3618,
+        "low": 3076,
+        "high": 3989
+      },
+      {
+        "year": 1991,
+        "events": 380,
+        "casualties": 3036,
+        "low": 2617,
+        "high": 4270
+      },
+      {
+        "year": 1992,
+        "events": 375,
+        "casualties": 3331,
+        "low": 3058,
+        "high": 4420
+      },
+      {
+        "year": 1993,
+        "events": 256,
+        "casualties": 1476,
+        "low": 1344,
+        "high": 2082
+      },
+      {
+        "year": 1994,
+        "events": 218,
+        "casualties": 2354,
+        "low": 2127,
+        "high": 3665
+      },
+      {
+        "year": 1995,
+        "events": 217,
+        "casualties": 1476,
+        "low": 1366,
+        "high": 1793
+      },
+      {
+        "year": 1996,
+        "events": 258,
+        "casualties": 1624,
+        "low": 1606,
+        "high": 1858
+      },
+      {
+        "year": 1997,
+        "events": 227,
+        "casualties": 1143,
+        "low": 1141,
+        "high": 1369
+      },
+      {
+        "year": 1998,
+        "events": 190,
+        "casualties": 1742,
+        "low": 1741,
+        "high": 2447
+      },
+      {
+        "year": 1999,
+        "events": 488,
+        "casualties": 2870,
+        "low": 2844,
+        "high": 3321
+      },
+      {
+        "year": 2000,
+        "events": 1424,
+        "casualties": 4563,
+        "low": 4522,
+        "high": 5434
+      },
+      {
+        "year": 2001,
+        "events": 1458,
+        "casualties": 7850,
+        "low": 7817,
+        "high": 8486
+      },
+      {
+        "year": 2002,
+        "events": 1978,
+        "casualties": 6169,
+        "low": 5943,
+        "high": 7325
+      },
+      {
+        "year": 2003,
+        "events": 2328,
+        "casualties": 4833,
+        "low": 4773,
+        "high": 5008
+      },
+      {
+        "year": 2004,
+        "events": 1869,
+        "casualties": 4016,
+        "low": 3892,
+        "high": 4595
+      },
+      {
+        "year": 2005,
+        "events": 1367,
+        "casualties": 3283,
+        "low": 3219,
+        "high": 3850
+      },
+      {
+        "year": 2006,
+        "events": 433,
+        "casualties": 1673,
+        "low": 1673,
+        "high": 2016
+      },
+      {
+        "year": 2007,
+        "events": 1774,
+        "casualties": 2726,
+        "low": 2717,
+        "high": 3165
+      },
+      {
+        "year": 2008,
+        "events": 793,
+        "casualties": 4596,
+        "low": 4527,
+        "high": 4839
+      },
+      {
+        "year": 2009,
+        "events": 811,
+        "casualties": 6236,
+        "low": 6109,
+        "high": 6409
+      },
+      {
+        "year": 2010,
+        "events": 2240,
+        "casualties": 6761,
+        "low": 6754,
+        "high": 7161
+      },
+      {
+        "year": 2011,
+        "events": 470,
+        "casualties": 5268,
+        "low": 5148,
+        "high": 5940
+      },
+      {
+        "year": 2012,
+        "events": 343,
+        "casualties": 6519,
+        "low": 6433,
+        "high": 6852
+      },
+      {
+        "year": 2013,
+        "events": 267,
+        "casualties": 4664,
+        "low": 4560,
+        "high": 4789
+      },
+      {
+        "year": 2014,
+        "events": 288,
+        "casualties": 3602,
+        "low": 3602,
+        "high": 4291
+      },
+      {
+        "year": 2015,
+        "events": 361,
+        "casualties": 4905,
+        "low": 4107,
+        "high": 5012
+      },
+      {
+        "year": 2016,
+        "events": 412,
+        "casualties": 4631,
+        "low": 4631,
+        "high": 5651
+      },
+      {
+        "year": 2017,
+        "events": 918,
+        "casualties": 12994,
+        "low": 12991,
+        "high": 13269
+      },
+      {
+        "year": 2018,
+        "events": 1337,
+        "casualties": 14331,
+        "low": 14017,
+        "high": 16282
+      },
+      {
+        "year": 2019,
+        "events": 1853,
+        "casualties": 12569,
+        "low": 12538,
+        "high": 14246
+      },
+      {
+        "year": 2020,
+        "events": 2979,
+        "casualties": 16492,
+        "low": 7026,
+        "high": 17179
+      },
+      {
+        "year": 2021,
+        "events": 4802,
+        "casualties": 18567,
+        "low": 9004,
+        "high": 20194
+      },
+      {
+        "year": 2022,
+        "events": 4042,
+        "casualties": 15133,
+        "low": 5916,
+        "high": 16299
+      },
+      {
+        "year": 2023,
+        "events": 5870,
+        "casualties": 15052,
+        "low": 7571,
+        "high": 16264
+      }
+    ],
+    "Asia": [
+      {
+        "year": 1989,
+        "events": 730,
+        "casualties": 14735,
+        "low": 8975,
+        "high": 31971
+      },
+      {
+        "year": 1990,
+        "events": 961,
+        "casualties": 14742,
+        "low": 14098,
+        "high": 18330
+      },
+      {
+        "year": 1991,
+        "events": 853,
+        "casualties": 17800,
+        "low": 17411,
+        "high": 20426
+      },
+      {
+        "year": 1992,
+        "events": 722,
+        "casualties": 19651,
+        "low": 19546,
+        "high": 24605
+      },
+      {
+        "year": 1993,
+        "events": 783,
+        "casualties": 10672,
+        "low": 10628,
+        "high": 18034
+      },
+      {
+        "year": 1994,
+        "events": 856,
+        "casualties": 13483,
+        "low": 13348,
+        "high": 18482
+      },
+      {
+        "year": 1995,
+        "events": 1026,
+        "casualties": 14692,
+        "low": 14604,
+        "high": 18145
+      },
+      {
+        "year": 1996,
+        "events": 933,
+        "casualties": 13788,
+        "low": 13552,
+        "high": 15858
+      },
+      {
+        "year": 1997,
+        "events": 924,
+        "casualties": 13379,
+        "low": 11155,
+        "high": 17182
+      },
+      {
+        "year": 1998,
+        "events": 1288,
+        "casualties": 19912,
+        "low": 17503,
+        "high": 24354
+      },
+      {
+        "year": 1999,
+        "events": 1726,
+        "casualties": 13082,
+        "low": 12386,
+        "high": 16771
+      },
+      {
+        "year": 2000,
+        "events": 2684,
+        "casualties": 16570,
+        "low": 15102,
+        "high": 19178
+      },
+      {
+        "year": 2001,
+        "events": 1574,
+        "casualties": 11743,
+        "low": 11058,
+        "high": 23688
+      },
+      {
+        "year": 2002,
+        "events": 3370,
+        "casualties": 10916,
+        "low": 9583,
+        "high": 12193
+      },
+      {
+        "year": 2003,
+        "events": 2571,
+        "casualties": 7908,
+        "low": 7492,
+        "high": 9916
+      },
+      {
+        "year": 2004,
+        "events": 3451,
+        "casualties": 8470,
+        "low": 7791,
+        "high": 10280
+      },
+      {
+        "year": 2005,
+        "events": 2861,
+        "casualties": 7188,
+        "low": 6876,
+        "high": 8305
+      },
+      {
+        "year": 2006,
+        "events": 3047,
+        "casualties": 11926,
+        "low": 11732,
+        "high": 14942
+      },
+      {
+        "year": 2007,
+        "events": 3153,
+        "casualties": 14514,
+        "low": 13644,
+        "high": 18627
+      },
+      {
+        "year": 2008,
+        "events": 3986,
+        "casualties": 21702,
+        "low": 21083,
+        "high": 26702
+      },
+      {
+        "year": 2009,
+        "events": 4013,
+        "casualties": 27824,
+        "low": 25298,
+        "high": 34807
+      },
+      {
+        "year": 2010,
+        "events": 3928,
+        "casualties": 16960,
+        "low": 16309,
+        "high": 21023
+      },
+      {
+        "year": 2011,
+        "events": 3824,
+        "casualties": 13387,
+        "low": 13181,
+        "high": 16750
+      },
+      {
+        "year": 2012,
+        "events": 3716,
+        "casualties": 13754,
+        "low": 13488,
+        "high": 16680
+      },
+      {
+        "year": 2013,
+        "events": 3055,
+        "casualties": 13043,
+        "low": 12508,
+        "high": 15588
+      },
+      {
+        "year": 2014,
+        "events": 3215,
+        "casualties": 17779,
+        "low": 16682,
+        "high": 21871
+      },
+      {
+        "year": 2015,
+        "events": 3341,
+        "casualties": 22531,
+        "low": 21344,
+        "high": 29215
+      },
+      {
+        "year": 2016,
+        "events": 3304,
+        "casualties": 21828,
+        "low": 20255,
+        "high": 29483
+      },
+      {
+        "year": 2017,
+        "events": 3457,
+        "casualties": 25807,
+        "low": 24772,
+        "high": 28156
+      },
+      {
+        "year": 2018,
+        "events": 4567,
+        "casualties": 29072,
+        "low": 27200,
+        "high": 33905
+      },
+      {
+        "year": 2019,
+        "events": 5475,
+        "casualties": 32855,
+        "low": 30722,
+        "high": 38483
+      },
+      {
+        "year": 2020,
+        "events": 4148,
+        "casualties": 22667,
+        "low": 21023,
+        "high": 24164
+      },
+      {
+        "year": 2021,
+        "events": 6065,
+        "casualties": 39655,
+        "low": 37323,
+        "high": 48896
+      },
+      {
+        "year": 2022,
+        "events": 2786,
+        "casualties": 6072,
+        "low": 5175,
+        "high": 16164
+      },
+      {
+        "year": 2023,
+        "events": 3054,
+        "casualties": 5417,
+        "low": 4994,
+        "high": 13079
+      }
+    ],
+    "Europe": [
+      {
+        "year": 1989,
+        "events": 63,
+        "casualties": 669,
+        "low": 529,
+        "high": 1514
+      },
+      {
+        "year": 1990,
+        "events": 72,
+        "casualties": 462,
+        "low": 345,
+        "high": 834
+      },
+      {
+        "year": 1991,
+        "events": 370,
+        "casualties": 3805,
+        "low": 3704,
+        "high": 5681
+      },
+      {
+        "year": 1992,
+        "events": 4601,
+        "casualties": 31549,
+        "low": 28183,
+        "high": 36915
+      },
+      {
+        "year": 1993,
+        "events": 3128,
+        "casualties": 17432,
+        "low": 16409,
+        "high": 21913
+      },
+      {
+        "year": 1994,
+        "events": 1977,
+        "casualties": 9343,
+        "low": 8506,
+        "high": 13130
+      },
+      {
+        "year": 1995,
+        "events": 1187,
+        "casualties": 20273,
+        "low": 19422,
+        "high": 28840
+      },
+      {
+        "year": 1996,
+        "events": 160,
+        "casualties": 2777,
+        "low": 2758,
+        "high": 4129
+      },
+      {
+        "year": 1997,
+        "events": 33,
+        "casualties": 94,
+        "low": 91,
+        "high": 114
+      },
+      {
+        "year": 1998,
+        "events": 240,
+        "casualties": 1563,
+        "low": 979,
+        "high": 2897
+      },
+      {
+        "year": 1999,
+        "events": 420,
+        "casualties": 8400,
+        "low": 8310,
+        "high": 18661
+      },
+      {
+        "year": 2000,
+        "events": 200,
+        "casualties": 4370,
+        "low": 4343,
+        "high": 7356
+      },
+      {
+        "year": 2001,
+        "events": 231,
+        "casualties": 1084,
+        "low": 1083,
+        "high": 1703
+      },
+      {
+        "year": 2002,
+        "events": 398,
+        "casualties": 1516,
+        "low": 1331,
+        "high": 3603
+      },
+      {
+        "year": 2003,
+        "events": 77,
+        "casualties": 552,
+        "low": 512,
+        "high": 701
+      },
+      {
+        "year": 2004,
+        "events": 271,
+        "casualties": 1544,
+        "low": 1525,
+        "high": 1758
+      },
+      {
+        "year": 2005,
+        "events": 272,
+        "casualties": 766,
+        "low": 734,
+        "high": 821
+      },
+      {
+        "year": 2006,
+        "events": 163,
+        "casualties": 267,
+        "low": 266,
+        "high": 369
+      },
+      {
+        "year": 2007,
+        "events": 157,
+        "casualties": 196,
+        "low": 196,
+        "high": 321
+      },
+      {
+        "year": 2008,
+        "events": 213,
+        "casualties": 1063,
+        "low": 938,
+        "high": 1364
+      },
+      {
+        "year": 2009,
+        "events": 325,
+        "casualties": 710,
+        "low": 566,
+        "high": 800
+      },
+      {
+        "year": 2010,
+        "events": 263,
+        "casualties": 504,
+        "low": 495,
+        "high": 734
+      },
+      {
+        "year": 2011,
+        "events": 263,
+        "casualties": 418,
+        "low": 416,
+        "high": 593
+      },
+      {
+        "year": 2012,
+        "events": 241,
+        "casualties": 554,
+        "low": 552,
+        "high": 768
+      },
+      {
+        "year": 2013,
+        "events": 190,
+        "casualties": 377,
+        "low": 342,
+        "high": 597
+      },
+      {
+        "year": 2014,
+        "events": 1412,
+        "casualties": 5168,
+        "low": 5044,
+        "high": 6047
+      },
+      {
+        "year": 2015,
+        "events": 956,
+        "casualties": 2192,
+        "low": 2023,
+        "high": 2304
+      },
+      {
+        "year": 2016,
+        "events": 581,
+        "casualties": 1051,
+        "low": 836,
+        "high": 1260
+      },
+      {
+        "year": 2017,
+        "events": 270,
+        "casualties": 559,
+        "low": 534,
+        "high": 638
+      },
+      {
+        "year": 2018,
+        "events": 202,
+        "casualties": 315,
+        "low": 238,
+        "high": 334
+      },
+      {
+        "year": 2019,
+        "events": 226,
+        "casualties": 352,
+        "low": 298,
+        "high": 354
+      },
+      {
+        "year": 2020,
+        "events": 313,
+        "casualties": 7879,
+        "low": 7690,
+        "high": 9371
+      },
+      {
+        "year": 2021,
+        "events": 195,
+        "casualties": 250,
+        "low": 209,
+        "high": 258
+      },
+      {
+        "year": 2022,
+        "events": 7479,
+        "casualties": 92992,
+        "low": 70259,
+        "high": 168943
+      },
+      {
+        "year": 2023,
+        "events": 10334,
+        "casualties": 76112,
+        "low": 60269,
+        "high": 136544
+      }
+    ],
+    "Middle East": [
+      {
+        "year": 1989,
+        "events": 471,
+        "casualties": 1778,
+        "low": 1659,
+        "high": 2029
+      },
+      {
+        "year": 1990,
+        "events": 390,
+        "casualties": 4057,
+        "low": 3643,
+        "high": 7213
+      },
+      {
+        "year": 1991,
+        "events": 351,
+        "casualties": 25659,
+        "low": 25616,
+        "high": 33186
+      },
+      {
+        "year": 1992,
+        "events": 511,
+        "casualties": 2994,
+        "low": 2982,
+        "high": 3608
+      },
+      {
+        "year": 1993,
+        "events": 742,
+        "casualties": 3647,
+        "low": 3610,
+        "high": 5225
+      },
+      {
+        "year": 1994,
+        "events": 937,
+        "casualties": 7104,
+        "low": 6884,
+        "high": 9369
+      },
+      {
+        "year": 1995,
+        "events": 1119,
+        "casualties": 5641,
+        "low": 5631,
+        "high": 7250
+      },
+      {
+        "year": 1996,
+        "events": 876,
+        "casualties": 5173,
+        "low": 5159,
+        "high": 5699
+      },
+      {
+        "year": 1997,
+        "events": 684,
+        "casualties": 4538,
+        "low": 4535,
+        "high": 5849
+      },
+      {
+        "year": 1998,
+        "events": 415,
+        "casualties": 2287,
+        "low": 2286,
+        "high": 2397
+      },
+      {
+        "year": 1999,
+        "events": 336,
+        "casualties": 1562,
+        "low": 1560,
+        "high": 2272
+      },
+      {
+        "year": 2000,
+        "events": 163,
+        "casualties": 579,
+        "low": 571,
+        "high": 663
+      },
+      {
+        "year": 2001,
+        "events": 243,
+        "casualties": 648,
+        "low": 639,
+        "high": 761
+      },
+      {
+        "year": 2002,
+        "events": 406,
+        "casualties": 1039,
+        "low": 1032,
+        "high": 1219
+      },
+      {
+        "year": 2003,
+        "events": 306,
+        "casualties": 8674,
+        "low": 8648,
+        "high": 14858
+      },
+      {
+        "year": 2004,
+        "events": 787,
+        "casualties": 5272,
+        "low": 5227,
+        "high": 7681
+      },
+      {
+        "year": 2005,
+        "events": 776,
+        "casualties": 4301,
+        "low": 4203,
+        "high": 5468
+      },
+      {
+        "year": 2006,
+        "events": 1169,
+        "casualties": 6649,
+        "low": 5767,
+        "high": 7413
+      },
+      {
+        "year": 2007,
+        "events": 850,
+        "casualties": 5617,
+        "low": 4859,
+        "high": 6242
+      },
+      {
+        "year": 2008,
+        "events": 718,
+        "casualties": 4174,
+        "low": 4000,
+        "high": 5221
+      },
+      {
+        "year": 2009,
+        "events": 594,
+        "casualties": 2912,
+        "low": 2534,
+        "high": 3180
+      },
+      {
+        "year": 2010,
+        "events": 564,
+        "casualties": 2470,
+        "low": 2111,
+        "high": 2691
+      },
+      {
+        "year": 2011,
+        "events": 1574,
+        "casualties": 7935,
+        "low": 7445,
+        "high": 8996
+      },
+      {
+        "year": 2012,
+        "events": 12634,
+        "casualties": 58754,
+        "low": 56414,
+        "high": 64651
+      },
+      {
+        "year": 2013,
+        "events": 19375,
+        "casualties": 81500,
+        "low": 77405,
+        "high": 86905
+      },
+      {
+        "year": 2014,
+        "events": 18788,
+        "casualties": 100397,
+        "low": 96704,
+        "high": 106597
+      },
+      {
+        "year": 2015,
+        "events": 13047,
+        "casualties": 81471,
+        "low": 78440,
+        "high": 86965
+      },
+      {
+        "year": 2016,
+        "events": 10901,
+        "casualties": 72206,
+        "low": 69981,
+        "high": 75609
+      },
+      {
+        "year": 2017,
+        "events": 9300,
+        "casualties": 55343,
+        "low": 52661,
+        "high": 62824
+      },
+      {
+        "year": 2018,
+        "events": 4555,
+        "casualties": 29507,
+        "low": 27647,
+        "high": 33318
+      },
+      {
+        "year": 2019,
+        "events": 3371,
+        "casualties": 16504,
+        "low": 14810,
+        "high": 18840
+      },
+      {
+        "year": 2020,
+        "events": 2349,
+        "casualties": 14436,
+        "low": 10889,
+        "high": 25216
+      },
+      {
+        "year": 2021,
+        "events": 2246,
+        "casualties": 27049,
+        "low": 25588,
+        "high": 37995
+      },
+      {
+        "year": 2022,
+        "events": 1956,
+        "casualties": 6613,
+        "low": 5738,
+        "high": 7902
+      },
+      {
+        "year": 2023,
+        "events": 2884,
+        "casualties": 31339,
+        "low": 31166,
+        "high": 35588
+      }
+    ]
+  }
+}

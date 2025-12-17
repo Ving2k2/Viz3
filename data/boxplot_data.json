@@ -1,0 +1,62 @@
+[
+  {
+    "region": "Africa",
+    "count": 63835,
+    "min": 0,
+    "q1": 1,
+    "median": 2,
+    "q3": 8,
+    "max": 18.5,
+    "mean": 31.39624030704159,
+    "totalCasualties": 2004179,
+    "color": "#1f77b4"
+  },
+  {
+    "region": "Americas",
+    "count": 43949,
+    "min": 0,
+    "q1": 1,
+    "median": 1,
+    "q3": 2,
+    "max": 3.5,
+    "mean": 4.995631299915812,
+    "totalCasualties": 219553,
+    "color": "#2ca02c"
+  },
+  {
+    "region": "Asia",
+    "count": 95447,
+    "min": 0,
+    "q1": 1,
+    "median": 2,
+    "q3": 5,
+    "max": 11,
+    "mean": 6.134545873626201,
+    "totalCasualties": 585524,
+    "color": "#ff7f0e"
+  },
+  {
+    "region": "Europe",
+    "count": 37483,
+    "min": 0,
+    "q1": 1,
+    "median": 2,
+    "q3": 3,
+    "max": 6,
+    "mean": 7.927807272630259,
+    "totalCasualties": 297158,
+    "color": "#9467bd"
+  },
+  {
+    "region": "Middle East",
+    "count": 116388,
+    "min": 0,
+    "q1": 1,
+    "median": 2,
+    "q3": 4,
+    "max": 8.5,
+    "mean": 5.926977007938963,
+    "totalCasualties": 689829,
+    "color": "#d62728"
+  }
+]

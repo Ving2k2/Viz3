@@ -1,0 +1,1100 @@
+{
+  "regions": [
+    "Africa",
+    "Americas",
+    "Asia",
+    "Europe",
+    "Middle East"
+  ],
+  "years": [
+    1989,
+    1990,
+    1991,
+    1992,
+    1993,
+    1994,
+    1995,
+    1996,
+    1997,
+    1998,
+    1999,
+    2000,
+    2001,
+    2002,
+    2003,
+    2004,
+    2005,
+    2006,
+    2007,
+    2008,
+    2009,
+    2010,
+    2011,
+    2012,
+    2013,
+    2014,
+    2015,
+    2016,
+    2017,
+    2018,
+    2019,
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "data": [
+    {
+      "region": "Africa",
+      "year": 1989,
+      "count": 913,
+      "casualties": 41079
+    },
+    {
+      "region": "Africa",
+      "year": 1990,
+      "count": 1303,
+      "casualties": 72865
+    },
+    {
+      "region": "Africa",
+      "year": 1991,
+      "count": 916,
+      "casualties": 34097
+    },
+    {
+      "region": "Africa",
+      "year": 1992,
+      "count": 1124,
+      "casualties": 18584
+    },
+    {
+      "region": "Africa",
+      "year": 1993,
+      "count": 1919,
+      "casualties": 40994
+    },
+    {
+      "region": "Africa",
+      "year": 1994,
+      "count": 3581,
+      "casualties": 791872
+    },
+    {
+      "region": "Africa",
+      "year": 1995,
+      "count": 1148,
+      "casualties": 20759
+    },
+    {
+      "region": "Africa",
+      "year": 1996,
+      "count": 1067,
+      "casualties": 64638
+    },
+    {
+      "region": "Africa",
+      "year": 1997,
+      "count": 1139,
+      "casualties": 47320
+    },
+    {
+      "region": "Africa",
+      "year": 1998,
+      "count": 1654,
+      "casualties": 36139
+    },
+    {
+      "region": "Africa",
+      "year": 1999,
+      "count": 1442,
+      "casualties": 75192
+    },
+    {
+      "region": "Africa",
+      "year": 2000,
+      "count": 1254,
+      "casualties": 68253
+    },
+    {
+      "region": "Africa",
+      "year": 2001,
+      "count": 857,
+      "casualties": 17007
+    },
+    {
+      "region": "Africa",
+      "year": 2002,
+      "count": 1315,
+      "casualties": 22410
+    },
+    {
+      "region": "Africa",
+      "year": 2003,
+      "count": 1141,
+      "casualties": 18990
+    },
+    {
+      "region": "Africa",
+      "year": 2004,
+      "count": 1155,
+      "casualties": 17523
+    },
+    {
+      "region": "Africa",
+      "year": 2005,
+      "count": 849,
+      "casualties": 5503
+    },
+    {
+      "region": "Africa",
+      "year": 2006,
+      "count": 792,
+      "casualties": 7839
+    },
+    {
+      "region": "Africa",
+      "year": 2007,
+      "count": 993,
+      "casualties": 6060
+    },
+    {
+      "region": "Africa",
+      "year": 2008,
+      "count": 1005,
+      "casualties": 8456
+    },
+    {
+      "region": "Africa",
+      "year": 2009,
+      "count": 1403,
+      "casualties": 12929
+    },
+    {
+      "region": "Africa",
+      "year": 2010,
+      "count": 890,
+      "casualties": 7445
+    },
+    {
+      "region": "Africa",
+      "year": 2011,
+      "count": 1584,
+      "casualties": 14243
+    },
+    {
+      "region": "Africa",
+      "year": 2012,
+      "count": 1606,
+      "casualties": 11178
+    },
+    {
+      "region": "Africa",
+      "year": 2013,
+      "count": 1634,
+      "casualties": 15547
+    },
+    {
+      "region": "Africa",
+      "year": 2014,
+      "count": 2237,
+      "casualties": 24684
+    },
+    {
+      "region": "Africa",
+      "year": 2015,
+      "count": 2170,
+      "casualties": 20807
+    },
+    {
+      "region": "Africa",
+      "year": 2016,
+      "count": 2176,
+      "casualties": 16823
+    },
+    {
+      "region": "Africa",
+      "year": 2017,
+      "count": 2359,
+      "casualties": 18742
+    },
+    {
+      "region": "Africa",
+      "year": 2018,
+      "count": 2849,
+      "casualties": 15998
+    },
+    {
+      "region": "Africa",
+      "year": 2019,
+      "count": 2916,
+      "casualties": 16015
+    },
+    {
+      "region": "Africa",
+      "year": 2020,
+      "count": 3643,
+      "casualties": 42720
+    },
+    {
+      "region": "Africa",
+      "year": 2021,
+      "count": 3946,
+      "casualties": 149325
+    },
+    {
+      "region": "Africa",
+      "year": 2022,
+      "count": 4511,
+      "casualties": 188826
+    },
+    {
+      "region": "Africa",
+      "year": 2023,
+      "count": 4344,
+      "casualties": 33317
+    },
+    {
+      "region": "Americas",
+      "year": 1989,
+      "count": 447,
+      "casualties": 9450
+    },
+    {
+      "region": "Americas",
+      "year": 1990,
+      "count": 476,
+      "casualties": 3618
+    },
+    {
+      "region": "Americas",
+      "year": 1991,
+      "count": 380,
+      "casualties": 3036
+    },
+    {
+      "region": "Americas",
+      "year": 1992,
+      "count": 375,
+      "casualties": 3331
+    },
+    {
+      "region": "Americas",
+      "year": 1993,
+      "count": 256,
+      "casualties": 1476
+    },
+    {
+      "region": "Americas",
+      "year": 1994,
+      "count": 218,
+      "casualties": 2354
+    },
+    {
+      "region": "Americas",
+      "year": 1995,
+      "count": 217,
+      "casualties": 1476
+    },
+    {
+      "region": "Americas",
+      "year": 1996,
+      "count": 258,
+      "casualties": 1624
+    },
+    {
+      "region": "Americas",
+      "year": 1997,
+      "count": 227,
+      "casualties": 1143
+    },
+    {
+      "region": "Americas",
+      "year": 1998,
+      "count": 190,
+      "casualties": 1742
+    },
+    {
+      "region": "Americas",
+      "year": 1999,
+      "count": 488,
+      "casualties": 2870
+    },
+    {
+      "region": "Americas",
+      "year": 2000,
+      "count": 1424,
+      "casualties": 4563
+    },
+    {
+      "region": "Americas",
+      "year": 2001,
+      "count": 1458,
+      "casualties": 7850
+    },
+    {
+      "region": "Americas",
+      "year": 2002,
+      "count": 1978,
+      "casualties": 6169
+    },
+    {
+      "region": "Americas",
+      "year": 2003,
+      "count": 2328,
+      "casualties": 4833
+    },
+    {
+      "region": "Americas",
+      "year": 2004,
+      "count": 1869,
+      "casualties": 4016
+    },
+    {
+      "region": "Americas",
+      "year": 2005,
+      "count": 1367,
+      "casualties": 3283
+    },
+    {
+      "region": "Americas",
+      "year": 2006,
+      "count": 433,
+      "casualties": 1673
+    },
+    {
+      "region": "Americas",
+      "year": 2007,
+      "count": 1774,
+      "casualties": 2726
+    },
+    {
+      "region": "Americas",
+      "year": 2008,
+      "count": 793,
+      "casualties": 4596
+    },
+    {
+      "region": "Americas",
+      "year": 2009,
+      "count": 811,
+      "casualties": 6236
+    },
+    {
+      "region": "Americas",
+      "year": 2010,
+      "count": 2240,
+      "casualties": 6761
+    },
+    {
+      "region": "Americas",
+      "year": 2011,
+      "count": 470,
+      "casualties": 5268
+    },
+    {
+      "region": "Americas",
+      "year": 2012,
+      "count": 343,
+      "casualties": 6519
+    },
+    {
+      "region": "Americas",
+      "year": 2013,
+      "count": 267,
+      "casualties": 4664
+    },
+    {
+      "region": "Americas",
+      "year": 2014,
+      "count": 288,
+      "casualties": 3602
+    },
+    {
+      "region": "Americas",
+      "year": 2015,
+      "count": 361,
+      "casualties": 4905
+    },
+    {
+      "region": "Americas",
+      "year": 2016,
+      "count": 412,
+      "casualties": 4631
+    },
+    {
+      "region": "Americas",
+      "year": 2017,
+      "count": 918,
+      "casualties": 12994
+    },
+    {
+      "region": "Americas",
+      "year": 2018,
+      "count": 1337,
+      "casualties": 14331
+    },
+    {
+      "region": "Americas",
+      "year": 2019,
+      "count": 1853,
+      "casualties": 12569
+    },
+    {
+      "region": "Americas",
+      "year": 2020,
+      "count": 2979,
+      "casualties": 16492
+    },
+    {
+      "region": "Americas",
+      "year": 2021,
+      "count": 4802,
+      "casualties": 18567
+    },
+    {
+      "region": "Americas",
+      "year": 2022,
+      "count": 4042,
+      "casualties": 15133
+    },
+    {
+      "region": "Americas",
+      "year": 2023,
+      "count": 5870,
+      "casualties": 15052
+    },
+    {
+      "region": "Asia",
+      "year": 1989,
+      "count": 730,
+      "casualties": 14735
+    },
+    {
+      "region": "Asia",
+      "year": 1990,
+      "count": 961,
+      "casualties": 14742
+    },
+    {
+      "region": "Asia",
+      "year": 1991,
+      "count": 853,
+      "casualties": 17800
+    },
+    {
+      "region": "Asia",
+      "year": 1992,
+      "count": 722,
+      "casualties": 19651
+    },
+    {
+      "region": "Asia",
+      "year": 1993,
+      "count": 783,
+      "casualties": 10672
+    },
+    {
+      "region": "Asia",
+      "year": 1994,
+      "count": 856,
+      "casualties": 13483
+    },
+    {
+      "region": "Asia",
+      "year": 1995,
+      "count": 1026,
+      "casualties": 14692
+    },
+    {
+      "region": "Asia",
+      "year": 1996,
+      "count": 933,
+      "casualties": 13788
+    },
+    {
+      "region": "Asia",
+      "year": 1997,
+      "count": 924,
+      "casualties": 13379
+    },
+    {
+      "region": "Asia",
+      "year": 1998,
+      "count": 1288,
+      "casualties": 19912
+    },
+    {
+      "region": "Asia",
+      "year": 1999,
+      "count": 1726,
+      "casualties": 13082
+    },
+    {
+      "region": "Asia",
+      "year": 2000,
+      "count": 2684,
+      "casualties": 16570
+    },
+    {
+      "region": "Asia",
+      "year": 2001,
+      "count": 1574,
+      "casualties": 11743
+    },
+    {
+      "region": "Asia",
+      "year": 2002,
+      "count": 3370,
+      "casualties": 10916
+    },
+    {
+      "region": "Asia",
+      "year": 2003,
+      "count": 2571,
+      "casualties": 7908
+    },
+    {
+      "region": "Asia",
+      "year": 2004,
+      "count": 3451,
+      "casualties": 8470
+    },
+    {
+      "region": "Asia",
+      "year": 2005,
+      "count": 2861,
+      "casualties": 7188
+    },
+    {
+      "region": "Asia",
+      "year": 2006,
+      "count": 3047,
+      "casualties": 11926
+    },
+    {
+      "region": "Asia",
+      "year": 2007,
+      "count": 3153,
+      "casualties": 14514
+    },
+    {
+      "region": "Asia",
+      "year": 2008,
+      "count": 3986,
+      "casualties": 21702
+    },
+    {
+      "region": "Asia",
+      "year": 2009,
+      "count": 4013,
+      "casualties": 27824
+    },
+    {
+      "region": "Asia",
+      "year": 2010,
+      "count": 3928,
+      "casualties": 16960
+    },
+    {
+      "region": "Asia",
+      "year": 2011,
+      "count": 3824,
+      "casualties": 13387
+    },
+    {
+      "region": "Asia",
+      "year": 2012,
+      "count": 3716,
+      "casualties": 13754
+    },
+    {
+      "region": "Asia",
+      "year": 2013,
+      "count": 3055,
+      "casualties": 13043
+    },
+    {
+      "region": "Asia",
+      "year": 2014,
+      "count": 3215,
+      "casualties": 17779
+    },
+    {
+      "region": "Asia",
+      "year": 2015,
+      "count": 3341,
+      "casualties": 22531
+    },
+    {
+      "region": "Asia",
+      "year": 2016,
+      "count": 3304,
+      "casualties": 21828
+    },
+    {
+      "region": "Asia",
+      "year": 2017,
+      "count": 3457,
+      "casualties": 25807
+    },
+    {
+      "region": "Asia",
+      "year": 2018,
+      "count": 4567,
+      "casualties": 29072
+    },
+    {
+      "region": "Asia",
+      "year": 2019,
+      "count": 5475,
+      "casualties": 32855
+    },
+    {
+      "region": "Asia",
+      "year": 2020,
+      "count": 4148,
+      "casualties": 22667
+    },
+    {
+      "region": "Asia",
+      "year": 2021,
+      "count": 6065,
+      "casualties": 39655
+    },
+    {
+      "region": "Asia",
+      "year": 2022,
+      "count": 2786,
+      "casualties": 6072
+    },
+    {
+      "region": "Asia",
+      "year": 2023,
+      "count": 3054,
+      "casualties": 5417
+    },
+    {
+      "region": "Europe",
+      "year": 1989,
+      "count": 63,
+      "casualties": 669
+    },
+    {
+      "region": "Europe",
+      "year": 1990,
+      "count": 72,
+      "casualties": 462
+    },
+    {
+      "region": "Europe",
+      "year": 1991,
+      "count": 370,
+      "casualties": 3805
+    },
+    {
+      "region": "Europe",
+      "year": 1992,
+      "count": 4601,
+      "casualties": 31549
+    },
+    {
+      "region": "Europe",
+      "year": 1993,
+      "count": 3128,
+      "casualties": 17432
+    },
+    {
+      "region": "Europe",
+      "year": 1994,
+      "count": 1977,
+      "casualties": 9343
+    },
+    {
+      "region": "Europe",
+      "year": 1995,
+      "count": 1187,
+      "casualties": 20273
+    },
+    {
+      "region": "Europe",
+      "year": 1996,
+      "count": 160,
+      "casualties": 2777
+    },
+    {
+      "region": "Europe",
+      "year": 1997,
+      "count": 33,
+      "casualties": 94
+    },
+    {
+      "region": "Europe",
+      "year": 1998,
+      "count": 240,
+      "casualties": 1563
+    },
+    {
+      "region": "Europe",
+      "year": 1999,
+      "count": 420,
+      "casualties": 8400
+    },
+    {
+      "region": "Europe",
+      "year": 2000,
+      "count": 200,
+      "casualties": 4370
+    },
+    {
+      "region": "Europe",
+      "year": 2001,
+      "count": 231,
+      "casualties": 1084
+    },
+    {
+      "region": "Europe",
+      "year": 2002,
+      "count": 398,
+      "casualties": 1516
+    },
+    {
+      "region": "Europe",
+      "year": 2003,
+      "count": 77,
+      "casualties": 552
+    },
+    {
+      "region": "Europe",
+      "year": 2004,
+      "count": 271,
+      "casualties": 1544
+    },
+    {
+      "region": "Europe",
+      "year": 2005,
+      "count": 272,
+      "casualties": 766
+    },
+    {
+      "region": "Europe",
+      "year": 2006,
+      "count": 163,
+      "casualties": 267
+    },
+    {
+      "region": "Europe",
+      "year": 2007,
+      "count": 157,
+      "casualties": 196
+    },
+    {
+      "region": "Europe",
+      "year": 2008,
+      "count": 213,
+      "casualties": 1063
+    },
+    {
+      "region": "Europe",
+      "year": 2009,
+      "count": 325,
+      "casualties": 710
+    },
+    {
+      "region": "Europe",
+      "year": 2010,
+      "count": 263,
+      "casualties": 504
+    },
+    {
+      "region": "Europe",
+      "year": 2011,
+      "count": 263,
+      "casualties": 418
+    },
+    {
+      "region": "Europe",
+      "year": 2012,
+      "count": 241,
+      "casualties": 554
+    },
+    {
+      "region": "Europe",
+      "year": 2013,
+      "count": 190,
+      "casualties": 377
+    },
+    {
+      "region": "Europe",
+      "year": 2014,
+      "count": 1412,
+      "casualties": 5168
+    },
+    {
+      "region": "Europe",
+      "year": 2015,
+      "count": 956,
+      "casualties": 2192
+    },
+    {
+      "region": "Europe",
+      "year": 2016,
+      "count": 581,
+      "casualties": 1051
+    },
+    {
+      "region": "Europe",
+      "year": 2017,
+      "count": 270,
+      "casualties": 559
+    },
+    {
+      "region": "Europe",
+      "year": 2018,
+      "count": 202,
+      "casualties": 315
+    },
+    {
+      "region": "Europe",
+      "year": 2019,
+      "count": 226,
+      "casualties": 352
+    },
+    {
+      "region": "Europe",
+      "year": 2020,
+      "count": 313,
+      "casualties": 7879
+    },
+    {
+      "region": "Europe",
+      "year": 2021,
+      "count": 195,
+      "casualties": 250
+    },
+    {
+      "region": "Europe",
+      "year": 2022,
+      "count": 7479,
+      "casualties": 92992
+    },
+    {
+      "region": "Europe",
+      "year": 2023,
+      "count": 10334,
+      "casualties": 76112
+    },
+    {
+      "region": "Middle East",
+      "year": 1989,
+      "count": 471,
+      "casualties": 1778
+    },
+    {
+      "region": "Middle East",
+      "year": 1990,
+      "count": 390,
+      "casualties": 4057
+    },
+    {
+      "region": "Middle East",
+      "year": 1991,
+      "count": 351,
+      "casualties": 25659
+    },
+    {
+      "region": "Middle East",
+      "year": 1992,
+      "count": 511,
+      "casualties": 2994
+    },
+    {
+      "region": "Middle East",
+      "year": 1993,
+      "count": 742,
+      "casualties": 3647
+    },
+    {
+      "region": "Middle East",
+      "year": 1994,
+      "count": 937,
+      "casualties": 7104
+    },
+    {
+      "region": "Middle East",
+      "year": 1995,
+      "count": 1119,
+      "casualties": 5641
+    },
+    {
+      "region": "Middle East",
+      "year": 1996,
+      "count": 876,
+      "casualties": 5173
+    },
+    {
+      "region": "Middle East",
+      "year": 1997,
+      "count": 684,
+      "casualties": 4538
+    },
+    {
+      "region": "Middle East",
+      "year": 1998,
+      "count": 415,
+      "casualties": 2287
+    },
+    {
+      "region": "Middle East",
+      "year": 1999,
+      "count": 336,
+      "casualties": 1562
+    },
+    {
+      "region": "Middle East",
+      "year": 2000,
+      "count": 163,
+      "casualties": 579
+    },
+    {
+      "region": "Middle East",
+      "year": 2001,
+      "count": 243,
+      "casualties": 648
+    },
+    {
+      "region": "Middle East",
+      "year": 2002,
+      "count": 406,
+      "casualties": 1039
+    },
+    {
+      "region": "Middle East",
+      "year": 2003,
+      "count": 306,
+      "casualties": 8674
+    },
+    {
+      "region": "Middle East",
+      "year": 2004,
+      "count": 787,
+      "casualties": 5272
+    },
+    {
+      "region": "Middle East",
+      "year": 2005,
+      "count": 776,
+      "casualties": 4301
+    },
+    {
+      "region": "Middle East",
+      "year": 2006,
+      "count": 1169,
+      "casualties": 6649
+    },
+    {
+      "region": "Middle East",
+      "year": 2007,
+      "count": 850,
+      "casualties": 5617
+    },
+    {
+      "region": "Middle East",
+      "year": 2008,
+      "count": 718,
+      "casualties": 4174
+    },
+    {
+      "region": "Middle East",
+      "year": 2009,
+      "count": 594,
+      "casualties": 2912
+    },
+    {
+      "region": "Middle East",
+      "year": 2010,
+      "count": 564,
+      "casualties": 2470
+    },
+    {
+      "region": "Middle East",
+      "year": 2011,
+      "count": 1574,
+      "casualties": 7935
+    },
+    {
+      "region": "Middle East",
+      "year": 2012,
+      "count": 12634,
+      "casualties": 58754
+    },
+    {
+      "region": "Middle East",
+      "year": 2013,
+      "count": 19375,
+      "casualties": 81500
+    },
+    {
+      "region": "Middle East",
+      "year": 2014,
+      "count": 18788,
+      "casualties": 100397
+    },
+    {
+      "region": "Middle East",
+      "year": 2015,
+      "count": 13047,
+      "casualties": 81471
+    },
+    {
+      "region": "Middle East",
+      "year": 2016,
+      "count": 10901,
+      "casualties": 72206
+    },
+    {
+      "region": "Middle East",
+      "year": 2017,
+      "count": 9300,
+      "casualties": 55343
+    },
+    {
+      "region": "Middle East",
+      "year": 2018,
+      "count": 4555,
+      "casualties": 29507
+    },
+    {
+      "region": "Middle East",
+      "year": 2019,
+      "count": 3371,
+      "casualties": 16504
+    },
+    {
+      "region": "Middle East",
+      "year": 2020,
+      "count": 2349,
+      "casualties": 14436
+    },
+    {
+      "region": "Middle East",
+      "year": 2021,
+      "count": 2246,
+      "casualties": 27049
+    },
+    {
+      "region": "Middle East",
+      "year": 2022,
+      "count": 1956,
+      "casualties": 6613
+    },
+    {
+      "region": "Middle East",
+      "year": 2023,
+      "count": 2884,
+      "casualties": 31339
+    }
+  ],
+  "maxCount": 19375,
+  "maxCasualties": 791872
+}

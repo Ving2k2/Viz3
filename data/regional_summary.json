@@ -1,0 +1,197 @@
+[
+  {
+    "region": "Africa",
+    "color": "#1f77b4",
+    "totalEvents": 63835,
+    "totalCasualties": 2004179,
+    "avgCasualtiesPerEvent": 31.39624030704159,
+    "yearRange": {
+      "min": 1989,
+      "max": 2023
+    },
+    "countriesAffected": 46,
+    "topCountries": [
+      {
+        "country": "DR Congo (Zaire)",
+        "events": 8118
+      },
+      {
+        "country": "Nigeria",
+        "events": 6928
+      },
+      {
+        "country": "Somalia",
+        "events": 6694
+      },
+      {
+        "country": "Ethiopia",
+        "events": 4520
+      },
+      {
+        "country": "Algeria",
+        "events": 4178
+      }
+    ],
+    "violenceTypeBreakdown": {
+      "stateBased": 31120,
+      "nonState": 10063,
+      "oneSided": 22652
+    }
+  },
+  {
+    "region": "Americas",
+    "color": "#2ca02c",
+    "totalEvents": 43949,
+    "totalCasualties": 219553,
+    "avgCasualtiesPerEvent": 4.995631299915812,
+    "yearRange": {
+      "min": 1989,
+      "max": 2023
+    },
+    "countriesAffected": 20,
+    "topCountries": [
+      {
+        "country": "Mexico",
+        "events": 18867
+      },
+      {
+        "country": "Colombia",
+        "events": 14223
+      },
+      {
+        "country": "Brazil",
+        "events": 6870
+      },
+      {
+        "country": "Venezuela",
+        "events": 1475
+      },
+      {
+        "country": "Peru",
+        "events": 890
+      }
+    ],
+    "violenceTypeBreakdown": {
+      "stateBased": 6942,
+      "nonState": 26062,
+      "oneSided": 10945
+    }
+  },
+  {
+    "region": "Asia",
+    "color": "#ff7f0e",
+    "totalEvents": 95447,
+    "totalCasualties": 585524,
+    "avgCasualtiesPerEvent": 6.134545873626201,
+    "yearRange": {
+      "min": 1989,
+      "max": 2023
+    },
+    "countriesAffected": 21,
+    "topCountries": [
+      {
+        "country": "Afghanistan",
+        "events": 42041
+      },
+      {
+        "country": "India",
+        "events": 17763
+      },
+      {
+        "country": "Myanmar (Burma)",
+        "events": 7380
+      },
+      {
+        "country": "Pakistan",
+        "events": 7168
+      },
+      {
+        "country": "Nepal",
+        "events": 5655
+      }
+    ],
+    "violenceTypeBreakdown": {
+      "stateBased": 78393,
+      "nonState": 2163,
+      "oneSided": 14891
+    }
+  },
+  {
+    "region": "Europe",
+    "color": "#9467bd",
+    "totalEvents": 37483,
+    "totalCasualties": 297158,
+    "avgCasualtiesPerEvent": 7.927807272630259,
+    "yearRange": {
+      "min": 1989,
+      "max": 2023
+    },
+    "countriesAffected": 23,
+    "topCountries": [
+      {
+        "country": "Ukraine",
+        "events": 21178
+      },
+      {
+        "country": "Bosnia-Herzegovina",
+        "events": 9340
+      },
+      {
+        "country": "Russia (Soviet Union)",
+        "events": 3886
+      },
+      {
+        "country": "Serbia (Yugoslavia)",
+        "events": 1204
+      },
+      {
+        "country": "Azerbaijan",
+        "events": 800
+      }
+    ],
+    "violenceTypeBreakdown": {
+      "stateBased": 35992,
+      "nonState": 454,
+      "oneSided": 1037
+    }
+  },
+  {
+    "region": "Middle East",
+    "color": "#d62728",
+    "totalEvents": 116388,
+    "totalCasualties": 689829,
+    "avgCasualtiesPerEvent": 5.926977007938963,
+    "yearRange": {
+      "min": 1989,
+      "max": 2023
+    },
+    "countriesAffected": 14,
+    "topCountries": [
+      {
+        "country": "Syria",
+        "events": 86754
+      },
+      {
+        "country": "Iraq",
+        "events": 9170
+      },
+      {
+        "country": "Turkey",
+        "events": 6917
+      },
+      {
+        "country": "Yemen (North Yemen)",
+        "events": 5261
+      },
+      {
+        "country": "Israel",
+        "events": 4978
+      }
+    ],
+    "violenceTypeBreakdown": {
+      "stateBased": 97922,
+      "nonState": 11188,
+      "oneSided": 7278
+    }
+  }
+]

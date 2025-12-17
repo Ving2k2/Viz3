@@ -1,0 +1,42 @@
+[
+  {
+    "region": "Africa",
+    "recent": 4344,
+    "avg": 1823.857142857143,
+    "trend": 3872,
+    "total": 63835,
+    "color": "#1f77b4"
+  },
+  {
+    "region": "Americas",
+    "recent": 5870,
+    "avg": 1255.6857142857143,
+    "trend": 3909.2,
+    "total": 43949,
+    "color": "#2ca02c"
+  },
+  {
+    "region": "Asia",
+    "recent": 3054,
+    "avg": 2727.057142857143,
+    "trend": 4305.6,
+    "total": 95447,
+    "color": "#ff7f0e"
+  },
+  {
+    "region": "Europe",
+    "recent": 10334,
+    "avg": 1070.942857142857,
+    "trend": 3709.4,
+    "total": 37483,
+    "color": "#9467bd"
+  },
+  {
+    "region": "Middle East",
+    "recent": 2884,
+    "avg": 3325.3714285714286,
+    "trend": 2561.2,
+    "total": 116388,
+    "color": "#d62728"
+  }
+]

@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Global Conflict Statistics - Viz2</title>
+    <!-- D3.js v7 -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <!-- Use shared CSS -->
+    <link rel="stylesheet" href="../css/globe.css">
+    <style>
+        /* Statistics-specific layout */
+        .stats-page {
+            padding: 80px 40px 40px;
+            max-width: 1500px;
+            margin: 0 auto;
+            background: var(--bg-secondary);
+            min-height: 100vh;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .page-header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            color: var(--text-muted);
+            font-size: 1rem;
+        }
+
+        /* Chart Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 28px;
+        }
+
+        .chart-card {
+            background: var(--bg-panel);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .chart-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+        }
+
+        .chart-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card h2 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .chart-card h2::before {
+            content: '';
+            width: 4px;
+            height: 20px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 2px;
+        }
+
+        .chart-card .description {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.6;
+            padding-left: 12px;
+            border-left: 2px solid var(--border-color);
+        }
+
+        .chart-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+            padding: 12px;
+            overflow: visible;
+            background: rgba(0, 0, 0, 0.02);
+            border-radius: 10px;
+        }
+
+        .chart-container svg {
+            width: 100%;
+            height: auto;
+            max-height: 380px;
+        }
+
+        .chart-card.full-width .chart-container {
+            min-height: 340px;
+        }
+
+        .chart-card.full-width .chart-container svg {
+            max-height: 360px;
+        }
+
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--text-muted);
+        }
+
+        /* Tooltip - consistent with other views */
+        .stats-tooltip {
+            position: absolute;
+            background: rgba(15, 23, 42, 0.95);
+            color: white;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            max-width: 280px;
+            line-height: 1.5;
+        }
+
+        .stats-tooltip strong {
+            color: var(--accent-primary);
+        }
+
+        /* Legend */
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: center;
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        /* Axis styling */
+        .axis path,
+        .axis line {
+            stroke: var(--text-muted);
+            stroke-width: 1;
+        }
+
+        .axis text {
+            fill: var(--text-secondary);
+            font-size: 11px;
+        }
+
+        .axis-label {
+            font-size: 12px;
+            font-weight: 500;
+            fill: var(--text-primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .chart-card.full-width {
+                grid-column: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-page {
+                padding: 70px 16px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- View Mode Toggle (same as other views) -->
+    <div class="view-mode-toggle">
+        <button class="view-mode-btn" onclick="window.location.href='../index.html'">
+            🗺️ Map View
+        </button>
+        <button class="view-mode-btn" onclick="window.location.href='graph.html'">
+            🔗 Graph View
+        </button>
+        <button class="view-mode-btn active" onclick="window.location.href='statistics.html'">
+            📊 Statistics View
+        </button>
+    </div>
+    <!-- Main Content -->
+    <div class="stats-page">
+        <header class="page-header">
+            <h1>Global Conflict Statistics</h1>
+            <p>Statistical analysis of UCDP/GED conflict events (1989-2023)</p>
+        </header>
+        <div class="charts-grid">
+            <!-- 1. Timeline Area Chart (Full Width) -->
+            <section class="chart-card full-width">
+                <h2>Conflict Trends Over Time</h2>
+                <p class="description">
+                    Area chart showing the trend of conflict events and casualties over time.
+                    The shaded area represents uncertainty in casualty estimates (low-high range).
+                </p>
+                <div class="chart-container" id="timeline-area"></div>
+            </section>
+            <!-- 3. Parallel Coordinates - Regional Change -->
+            <section class="chart-card">
+                <h2>Regional Conflict Trends Over Time</h2>
+                <p class="description">
+                    Parallel coordinates showing average annual events across 7 time periods.
+                    Track how conflict intensity has evolved in each region since 1989.
+                </p>
+                <div class="chart-container" id="slope-regions"></div>
+            </section>
+            <!-- Violence Types Waffle Chart -->
+            <section class="chart-card">
+                <h2>Violence Types Distribution</h2>
+                <p class="description">
+                    Waffle chart showing the proportion of conflict events by violence type.
+                    Each square represents 1% of total events.
+                </p>
+                <div class="chart-container" id="waffle-violence"></div>
+            </section>
+            <!-- 4. Ridgeline Plot - Events per Year -->
+            <section class="chart-card full-width">
+                <h2>Conflict Activity Over Time by Region</h2>
+                <p class="description">
+                    Ridgeline plot showing how conflict frequency varies over time for each region.
+                    Overlapping peaks reveal periods of high and low conflict activity.
+                </p>
+                <div class="chart-container" id="ridgeline-casualties"></div>
+            </section>
+            <!-- 5. Diverging Bar Chart - Violence Types by Region -->
+            <section class="chart-card">
+                <h2>Violence Type Comparison by Region</h2>
+                <p class="description">
+                    Diverging bar chart showing the balance between state-based conflicts (left)
+                    and one-sided violence (right) for each region.
+                </p>
+                <div class="chart-container" id="diverging-violence"></div>
+            </section>
+            <!-- 6. Treemap - Casualties by Country -->
+            <section class="chart-card">
+                <h2>Total Casualties by Country (Top 20)</h2>
+                <p class="description">
+                    Treemap visualization where each rectangle's area is proportional to
+                    total recorded casualties. Color indicates the primary region.
+                </p>
+                <div class="chart-container" id="treemap-casualties"></div>
+            </section>
+            <!-- 7. Heatmap - Monthly Patterns -->
+            <section class="chart-card full-width">
+                <h2>Conflict Seasonality Heatmap</h2>
+                <p class="description">
+                    Heatmap showing average conflict events by month and year.
+                    Darker cells indicate higher conflict activity.
+                </p>
+                <div class="chart-container" id="heatmap-monthly"></div>
+            </section>
+            <!-- 8. Bullet Chart - Key Metrics -->
+            <section class="chart-card">
+                <h2>Regional Performance Metrics</h2>
+                <p class="description">
+                    Bullet charts comparing each region's 2023 conflict level against
+                    historical average (grey bar) and recent trend (marker).
+                </p>
+                <div class="chart-container" id="bullet-regions"></div>
+            </section>
+            <!-- 9. Dot Plot with Error Bars - Average Casualties -->
+            <section class="chart-card">
+                <h2>Average Casualties with Uncertainty</h2>
+                <p class="description">
+                    Dot plot showing mean casualties per event by region with 95% confidence intervals.
+                    Error bars convey the uncertainty in estimates.
+                </p>
+                <div class="chart-container" id="dot-error-bars"></div>
+            </section>
+            <!-- 10. 2D Heatmap - Time Period x Casualty Range -->
+            <section class="chart-card full-width">
+                <h2>Event Distribution: Time × Casualties</h2>
+                <p class="description">
+                    Heatmap showing event density across time periods (Y-axis) and casualty ranges (X-axis).
+                    Color intensity indicates number of events in each bucket.
+                </p>
+                <div class="chart-container" id="waffle-2d"></div>
+            </section>
+        </div>
+    </div>
+    <!-- Tooltip -->
+    <div class="stats-tooltip" id="tooltip" style="opacity: 0;"></div>
+    <!-- Statistics Script -->
+    <script src="../scripts/statistics.js"></script>
+</body>

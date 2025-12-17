@@ -1,0 +1,122 @@
+[
+  {
+    "name": "Rwanda",
+    "value": 794116,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Ethiopia",
+    "value": 500015,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Syria",
+    "value": 409695,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "name": "Afghanistan",
+    "value": 317440,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "name": "Ukraine",
+    "value": 176952,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "name": "DR Congo (Zaire)",
+    "value": 133972,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Mexico",
+    "value": 130013,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "name": "Iraq",
+    "value": 126832,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "name": "Sudan",
+    "value": 106336,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Nigeria",
+    "value": 70652,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Yemen (North Yemen)",
+    "value": 66789,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "name": "Sri Lanka",
+    "value": 65628,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "name": "Bosnia-Herzegovina",
+    "value": 63535,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "name": "Somalia",
+    "value": 62061,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "India",
+    "value": 60469,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "name": "Burundi",
+    "value": 50822,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "name": "Pakistan",
+    "value": 45304,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "name": "Colombia",
+    "value": 44611,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "name": "Israel",
+    "value": 36730,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "name": "Angola",
+    "value": 33309,
+    "region": "Africa",
+    "color": "#1f77b4"
+  }
+]

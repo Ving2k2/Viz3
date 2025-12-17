@@ -4,27 +4,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Conflict Map - Map View</title>
+    <title>Global Conflict Map - Faction Graph View</title>
 
     <!-- D3.js v7 -->
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <!-- TopoJSON for world map data -->
     <script src="https://unpkg.com/topojson@3"></script>
 
-    <!-- CSS: Unified stylesheet -->
-    <link rel="stylesheet" href="css/globe.css">
+    <!-- Unified CSS for both views -->
+    <link rel="stylesheet" href="../css/globe.css">
 </head>
 
 <body>
     <!-- View Mode Toggle -->
     <div class="view-mode-toggle">
-        <button class="view-mode-btn active" id="map-view-btn" onclick="window.location.href='index.html'">
+        <button class="view-mode-btn" id="map-view-btn" onclick="window.location.href='../index.html'">
             🗺️ Map View
         </button>
-        <button class="view-mode-btn" id="graph-view-btn" onclick="window.location.href='html/graph.html'">
+        <button class="view-mode-btn active" id="graph-view-btn" onclick="window.location.href='graph.html'">
             🔗 Graph View
         </button>
-        <button class="view-mode-btn" id="stats-view-btn" onclick="window.location.href='html/statistics.html'">
+        <button class="view-mode-btn" id="stats-view-btn" onclick="window.location.href='statistics.html'">
             📊 Statistics View
         </button>
     </div>
@@ -33,15 +33,14 @@
     <div class="app-container">
         <!-- Header -->
         <header class="header">
-            <h1 class="title">Global Conflict Map</h1>
-            <p class="subtitle">Global Conflict Analysis - UCDP GED Dataset (Country View)</p>
+            <h1 class="title">Faction Relationship Network</h1>
+            <p class="subtitle">Global Conflict Analysis - UCDP GED Dataset (Faction View)</p>
         </header>
 
-        <!-- Main Content: 3 columns (Flexbox layout) -->
+        <!-- Main Content: 3 columns -->
         <div class="content-wrapper">
-            <!-- LEFT PANEL: Statistics & Filters -->
             <aside class="left-panel" id="left-panel">
-                <!-- Statistics Container -->
+
                 <div class="stats-container">
                     <h3>Overview Statistics</h3>
                     <div class="stat-item">
@@ -54,7 +53,7 @@
                     </div>
                 </div>
 
-                <!-- Region Legend -->
+                <!-- Legend -->
                 <div class="legend-section">
                     <h3>Regions</h3>
                     <div id="legend" class="legend-container"></div>
@@ -66,16 +65,42 @@
                     <div id="violence-type-filter" class="legend-container"></div>
                 </div>
 
-                <!-- Back Button (hidden by default) -->
+                <!-- Relationship Type Filter (for Graph View) -->
+                <div class="relationship-filter-section" id="relationship-filter-section">
+                    <h3>Relationship Type</h3>
+                    <div id="relationship-type-filter" class="legend-container">
+                        <div class="legend-item active" id="filter-all-relationships" data-filter="all">
+                            <div class="legend-color"
+                                style="background: linear-gradient(90deg, #22c55e 50%, #ef4444 50%);"></div>
+                            <span>All Relationships</span>
+                        </div>
+                        <div class="legend-item" id="filter-allies-only" data-filter="allies">
+                            <div class="legend-color" style="background: #22c55e;"></div>
+                            <span>Allies Only</span>
+                        </div>
+                        <div class="legend-item" id="filter-opponents-only" data-filter="opponents">
+                            <div class="legend-color" style="background: #ef4444;"></div>
+                            <span>Opponents Only</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reset Button (hidden by default) -->
                 <button id="reset-zoom" class="reset-btn" style="display: none;">
                     ← Back
                 </button>
             </aside>
 
-            <!-- CENTER: World Map View -->
+            <!-- CENTER: Graph View OR Faction Map -->
             <main class="map-section">
-                <!-- World Map SVG -->
-                <svg id="world-map"></svg>
+                <!-- Map View (hidden by default, shown on faction double-click) -->
+                <svg id="world-map" style="display: none;"></svg>
+
+                <!-- Graph View (default) -->
+                <div id="graph-container" class="active">
+                    <svg id="graph-svg"></svg>
+                </div>
+
 
                 <!-- Time Slider Control -->
                 <div class="time-slider-container">
@@ -94,7 +119,7 @@
                 <div id="event-modal" class="modal" style="display: none;">
                     <div class="modal-content">
                         <span class="close-modal">&times;</span>
-                        <h2 id="modal-title">Event Details</h2>
+                        <h2 id="modal-title">Event Title</h2>
                         <div class="modal-body">
                             <div class="modal-meta">
                                 <span id="modal-date">Date</span> •
@@ -118,10 +143,30 @@
                 </div>
             </main>
 
-            <!-- RIGHT PANEL: Statistical Charts (Built dynamically by global-new.js) -->
+            <!-- RIGHT PANEL: Statistical Charts (Matching User Image 1) -->
             <aside class="right-panel" id="charts-panel" style="display: none;">
-                <!-- Content is built dynamically by updateDashboardUILocal() in global-new.js -->
-                <!-- Structure matches graph.html but rendered via JavaScript -->
+                <div class="charts-header">
+                    <h3 id="charts-title">Faction Statistics</h3>
+                    <p id="charts-subtitle">Comprehensive Data</p>
+                </div>
+
+                <!-- Chart 1: Timeline -->
+                <div class="chart-container">
+                    <h4>Casualties Over Time</h4>
+                    <svg id="chart-timeline" class="stat-chart"></svg>
+                </div>
+
+                <!-- Chart 2: Active Factions (Horizontal Bar Chart - Click to Filter) -->
+                <div class="chart-container" id="faction-connected-chart-container">
+                    <h4>Active Factions</h4>
+                    <div id="faction-connected-chart" class="factions-chart"></div>
+                </div>
+
+                <!-- Chart 3: Top Events -->
+                <div class="chart-container">
+                    <h4>Most Severe Events</h4>
+                    <div id="chart-top-events" class="events-list"></div>
+                </div>
             </aside>
         </div>
 
@@ -135,16 +180,16 @@
     </div>
 
     <!-- Load shared modules in correct order -->
-    <script src="js/shared/constants.js"></script>
-    <script src="js/shared/utils.js"></script>
-    <script src="js/shared/stateManager.js"></script>
-    <script src="js/shared/dataLoader.js"></script>
-    <script src="js/shared/mapRenderer.js"></script>
-    <script src="js/shared/chartRenderer.js"></script>
-    <script src="js/shared/panelBuilder.js"></script>
-    <script src="js/shared/canvasBubbleRenderer.js"></script>
-    <!-- Load Map View script -->
-    <script src="scripts/global-new.js"></script>
+    <script src="../js/shared/constants.js"></script>
+    <script src="../js/shared/utils.js"></script>
+    <script src="../js/shared/stateManager.js"></script>
+    <script src="../js/shared/dataLoader.js"></script>
+    <script src="../js/shared/mapRenderer.js"></script>
+    <script src="../js/shared/chartRenderer.js"></script>
+    <script src="../js/shared/panelBuilder.js"></script>
+    <script src="../js/shared/canvasBubbleRenderer.js"></script>
+    <!-- Load Graph View script -->
+    <script src="../scripts/graph.js"></script>
 
 </body>
 

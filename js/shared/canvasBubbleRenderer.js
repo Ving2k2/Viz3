@@ -136,10 +136,10 @@ class CanvasBubbleRenderer {
     /**
      * Set bubbles data and render
      * @param {Array} data - Array of bubble data with coordinates
-     * @param {Object} options - { radiusScale, colorFn, type }
+     * @param {Object} options - { radiusScale, colorFn, type, animate }
      */
     setBubbles(data, options = {}) {
-        const { radiusScale, colorFn, type = 'conflict' } = options;
+        const { radiusScale, colorFn, type = 'conflict', animate = true } = options;
 
         this.bubbles = data.map(d => {
             let coords;
@@ -158,12 +158,56 @@ class CanvasBubbleRenderer {
                 cx: coords[0],
                 cy: coords[1],
                 r: radiusScale ? radiusScale(d.best || d.totalCasualties || 0) : 5,
+                targetR: radiusScale ? radiusScale(d.best || d.totalCasualties || 0) : 5,
                 color: colorFn ? colorFn(d) : '#3b82f6',
-                type: type
+                type: type,
+                opacity: animate ? 0 : 0.7, // Start with 0 opacity if animating
+                targetOpacity: 0.7
             };
         }).filter(Boolean);
 
-        this.render();
+        // Animate bubbles appearing
+        if (animate && this.bubbles.length > 0) {
+            this._animateBubblesIn();
+        } else {
+            this.render();
+        }
+    }
+
+    /**
+     * Animate bubbles fading in with size growth
+     */
+    _animateBubblesIn() {
+        const duration = 500; // ms
+        const startTime = performance.now();
+
+        const animate = (currentTime) => {
+            const elapsed = currentTime - startTime;
+            const progress = Math.min(1, elapsed / duration);
+
+            // Ease out cubic for smooth deceleration
+            const eased = 1 - Math.pow(1 - progress, 3);
+
+            this.bubbles.forEach(bubble => {
+                bubble.opacity = bubble.targetOpacity * eased;
+                bubble.r = bubble.targetR * eased;
+            });
+
+            this.render();
+
+            if (progress < 1) {
+                requestAnimationFrame(animate);
+            } else {
+                // Ensure final values are set
+                this.bubbles.forEach(bubble => {
+                    bubble.opacity = bubble.targetOpacity;
+                    bubble.r = bubble.targetR;
+                });
+                this.render();
+            }
+        };
+
+        requestAnimationFrame(animate);
     }
 
     /**

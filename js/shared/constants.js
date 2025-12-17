@@ -57,7 +57,7 @@ const COUNTRY_NAME_MAPPING = {
     "Former Yugoslav Republic of Macedonia": "North Macedonia",
     "Croatia": "Croatia",
     "Slovenia": "Slovenia",
-    
+
     // Asian countries
     "Laos": "Lao PDR",
     "Vietnam": "Vietnam",

@@ -1,0 +1,122 @@
+[
+  {
+    "country": "Syria",
+    "events": 86754,
+    "casualties": 409695,
+    "avgCasualties": 4.722491181962791,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Afghanistan",
+    "events": 42041,
+    "casualties": 317440,
+    "avgCasualties": 7.550724292952118,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Ukraine",
+    "events": 21178,
+    "casualties": 176952,
+    "avgCasualties": 8.355463216545472,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "country": "Mexico",
+    "events": 18867,
+    "casualties": 130013,
+    "avgCasualties": 6.891026660306355,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "India",
+    "events": 17763,
+    "casualties": 60469,
+    "avgCasualties": 3.4042110003940778,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Colombia",
+    "events": 14223,
+    "casualties": 44611,
+    "avgCasualties": 3.136539408001125,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "Bosnia-Herzegovina",
+    "events": 9340,
+    "casualties": 63535,
+    "avgCasualties": 6.802462526766595,
+    "region": "Europe",
+    "color": "#9467bd"
+  },
+  {
+    "country": "Iraq",
+    "events": 9170,
+    "casualties": 126832,
+    "avgCasualties": 13.831188658669575,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "DR Congo (Zaire)",
+    "events": 8118,
+    "casualties": 133972,
+    "avgCasualties": 16.503079576250308,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Myanmar (Burma)",
+    "events": 7380,
+    "casualties": 28664,
+    "avgCasualties": 3.884010840108401,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Pakistan",
+    "events": 7168,
+    "casualties": 45304,
+    "avgCasualties": 6.3203125,
+    "region": "Asia",
+    "color": "#ff7f0e"
+  },
+  {
+    "country": "Nigeria",
+    "events": 6928,
+    "casualties": 70652,
+    "avgCasualties": 10.198036951501155,
+    "region": "Africa",
+    "color": "#1f77b4"
+  },
+  {
+    "country": "Turkey",
+    "events": 6917,
+    "casualties": 32041,
+    "avgCasualties": 4.632210495879717,
+    "region": "Middle East",
+    "color": "#d62728"
+  },
+  {
+    "country": "Brazil",
+    "events": 6870,
+    "casualties": 18373,
+    "avgCasualties": 2.6743813682678312,
+    "region": "Americas",
+    "color": "#2ca02c"
+  },
+  {
+    "country": "Somalia",
+    "events": 6694,
+    "casualties": 62061,
+    "avgCasualties": 9.271138332835376,
+    "region": "Africa",
+    "color": "#1f77b4"
+  }
+]

@@ -1,0 +1,20 @@
+{
+  "totalEvents": 357102,
+  "totalCasualties": 3796243,
+  "avgCasualtiesPerEvent": 10.630696551685514,
+  "yearRange": {
+    "min": 1989,
+    "max": 2023
+  },
+  "regionsCount": 5,
+  "countriesCount": 124,
+  "deadliestYear": {
+    "year": 1994,
+    "casualties": 824156
+  },
+  "mostActiveYear": {
+    "year": 2023,
+    "events": 26486
+  },
+  "generated": "2025-12-17T15:49:31.807Z"
+}

@@ -1,0 +1,387 @@
+[
+  {
+    "year": 1989,
+    "events": 2624,
+    "casualties": 67711,
+    "avgCasualties": 25.804496951219512,
+    "byViolenceType": {
+      "stateBased": 1744,
+      "nonState": 314,
+      "oneSided": 566
+    }
+  },
+  {
+    "year": 1990,
+    "events": 3202,
+    "casualties": 95744,
+    "avgCasualties": 29.901311680199875,
+    "byViolenceType": {
+      "stateBased": 1657,
+      "nonState": 620,
+      "oneSided": 925
+    }
+  },
+  {
+    "year": 1991,
+    "events": 2870,
+    "casualties": 84397,
+    "avgCasualties": 29.406620209059234,
+    "byViolenceType": {
+      "stateBased": 1671,
+      "nonState": 534,
+      "oneSided": 665
+    }
+  },
+  {
+    "year": 1992,
+    "events": 7333,
+    "casualties": 76109,
+    "avgCasualties": 10.378971771444157,
+    "byViolenceType": {
+      "stateBased": 5653,
+      "nonState": 923,
+      "oneSided": 757
+    }
+  },
+  {
+    "year": 1993,
+    "events": 6828,
+    "casualties": 74221,
+    "avgCasualties": 10.870093731693029,
+    "byViolenceType": {
+      "stateBased": 4874,
+      "nonState": 810,
+      "oneSided": 1144
+    }
+  },
+  {
+    "year": 1994,
+    "events": 7569,
+    "casualties": 824156,
+    "avgCasualties": 108.88571806050997,
+    "byViolenceType": {
+      "stateBased": 4354,
+      "nonState": 420,
+      "oneSided": 2795
+    }
+  },
+  {
+    "year": 1995,
+    "events": 4697,
+    "casualties": 62841,
+    "avgCasualties": 13.378965296998084,
+    "byViolenceType": {
+      "stateBased": 3708,
+      "nonState": 239,
+      "oneSided": 750
+    }
+  },
+  {
+    "year": 1996,
+    "events": 3294,
+    "casualties": 88000,
+    "avgCasualties": 26.71523982999393,
+    "byViolenceType": {
+      "stateBased": 2234,
+      "nonState": 223,
+      "oneSided": 837
+    }
+  },
+  {
+    "year": 1997,
+    "events": 3007,
+    "casualties": 66474,
+    "avgCasualties": 22.10641835716661,
+    "byViolenceType": {
+      "stateBased": 2030,
+      "nonState": 212,
+      "oneSided": 765
+    }
+  },
+  {
+    "year": 1998,
+    "events": 3787,
+    "casualties": 61643,
+    "avgCasualties": 16.277528386585686,
+    "byViolenceType": {
+      "stateBased": 2523,
+      "nonState": 220,
+      "oneSided": 1044
+    }
+  },
+  {
+    "year": 1999,
+    "events": 4412,
+    "casualties": 101106,
+    "avgCasualties": 22.91613780598368,
+    "byViolenceType": {
+      "stateBased": 2672,
+      "nonState": 265,
+      "oneSided": 1475
+    }
+  },
+  {
+    "year": 2000,
+    "events": 5725,
+    "casualties": 94335,
+    "avgCasualties": 16.477729257641922,
+    "byViolenceType": {
+      "stateBased": 3577,
+      "nonState": 319,
+      "oneSided": 1829
+    }
+  },
+  {
+    "year": 2001,
+    "events": 4363,
+    "casualties": 38332,
+    "avgCasualties": 8.785697914279165,
+    "byViolenceType": {
+      "stateBased": 2385,
+      "nonState": 273,
+      "oneSided": 1705
+    }
+  },
+  {
+    "year": 2002,
+    "events": 7467,
+    "casualties": 42050,
+    "avgCasualties": 5.6314450247756795,
+    "byViolenceType": {
+      "stateBased": 4921,
+      "nonState": 395,
+      "oneSided": 2151
+    }
+  },
+  {
+    "year": 2003,
+    "events": 6423,
+    "casualties": 40957,
+    "avgCasualties": 6.376615288805854,
+    "byViolenceType": {
+      "stateBased": 3461,
+      "nonState": 313,
+      "oneSided": 2649
+    }
+  },
+  {
+    "year": 2004,
+    "events": 7533,
+    "casualties": 36825,
+    "avgCasualties": 4.888490641178813,
+    "byViolenceType": {
+      "stateBased": 4555,
+      "nonState": 311,
+      "oneSided": 2667
+    }
+  },
+  {
+    "year": 2005,
+    "events": 6125,
+    "casualties": 21041,
+    "avgCasualties": 3.435265306122449,
+    "byViolenceType": {
+      "stateBased": 3677,
+      "nonState": 205,
+      "oneSided": 2243
+    }
+  },
+  {
+    "year": 2006,
+    "events": 5604,
+    "casualties": 28354,
+    "avgCasualties": 5.05960028551035,
+    "byViolenceType": {
+      "stateBased": 3822,
+      "nonState": 292,
+      "oneSided": 1490
+    }
+  },
+  {
+    "year": 2007,
+    "events": 6927,
+    "casualties": 29113,
+    "avgCasualties": 4.2028295077234015,
+    "byViolenceType": {
+      "stateBased": 3815,
+      "nonState": 1686,
+      "oneSided": 1426
+    }
+  },
+  {
+    "year": 2008,
+    "events": 6715,
+    "casualties": 39991,
+    "avgCasualties": 5.955472822040209,
+    "byViolenceType": {
+      "stateBased": 4803,
+      "nonState": 685,
+      "oneSided": 1227
+    }
+  },
+  {
+    "year": 2009,
+    "events": 7146,
+    "casualties": 50611,
+    "avgCasualties": 7.082423733557235,
+    "byViolenceType": {
+      "stateBased": 4858,
+      "nonState": 844,
+      "oneSided": 1444
+    }
+  },
+  {
+    "year": 2010,
+    "events": 7885,
+    "casualties": 34140,
+    "avgCasualties": 4.329740012682308,
+    "byViolenceType": {
+      "stateBased": 4576,
+      "nonState": 2338,
+      "oneSided": 971
+    }
+  },
+  {
+    "year": 2011,
+    "events": 7715,
+    "casualties": 41251,
+    "avgCasualties": 5.346856772521063,
+    "byViolenceType": {
+      "stateBased": 5357,
+      "nonState": 658,
+      "oneSided": 1700
+    }
+  },
+  {
+    "year": 2012,
+    "events": 18540,
+    "casualties": 90759,
+    "avgCasualties": 4.895307443365696,
+    "byViolenceType": {
+      "stateBased": 16318,
+      "nonState": 646,
+      "oneSided": 1576
+    }
+  },
+  {
+    "year": 2013,
+    "events": 24521,
+    "casualties": 115131,
+    "avgCasualties": 4.695200032625097,
+    "byViolenceType": {
+      "stateBased": 22110,
+      "nonState": 860,
+      "oneSided": 1551
+    }
+  },
+  {
+    "year": 2014,
+    "events": 25940,
+    "casualties": 151630,
+    "avgCasualties": 5.845412490362374,
+    "byViolenceType": {
+      "stateBased": 21406,
+      "nonState": 2648,
+      "oneSided": 1886
+    }
+  },
+  {
+    "year": 2015,
+    "events": 19875,
+    "casualties": 131906,
+    "avgCasualties": 6.636779874213836,
+    "byViolenceType": {
+      "stateBased": 16145,
+      "nonState": 1823,
+      "oneSided": 1907
+    }
+  },
+  {
+    "year": 2016,
+    "events": 17374,
+    "casualties": 116539,
+    "avgCasualties": 6.707666628295153,
+    "byViolenceType": {
+      "stateBased": 13471,
+      "nonState": 2279,
+      "oneSided": 1624
+    }
+  },
+  {
+    "year": 2017,
+    "events": 16304,
+    "casualties": 113445,
+    "avgCasualties": 6.958108439646712,
+    "byViolenceType": {
+      "stateBased": 11075,
+      "nonState": 3557,
+      "oneSided": 1672
+    }
+  },
+  {
+    "year": 2018,
+    "events": 13510,
+    "casualties": 89223,
+    "avgCasualties": 6.604219096965211,
+    "byViolenceType": {
+      "stateBased": 8881,
+      "nonState": 3105,
+      "oneSided": 1524
+    }
+  },
+  {
+    "year": 2019,
+    "events": 13841,
+    "casualties": 78295,
+    "avgCasualties": 5.656744454880427,
+    "byViolenceType": {
+      "stateBased": 9294,
+      "nonState": 2875,
+      "oneSided": 1672
+    }
+  },
+  {
+    "year": 2020,
+    "events": 13432,
+    "casualties": 104194,
+    "avgCasualties": 7.757147111375819,
+    "byViolenceType": {
+      "stateBased": 7828,
+      "nonState": 3617,
+      "oneSided": 1987
+    }
+  },
+  {
+    "year": 2021,
+    "events": 17254,
+    "casualties": 234846,
+    "avgCasualties": 13.611104671380549,
+    "byViolenceType": {
+      "stateBased": 9767,
+      "nonState": 5094,
+      "oneSided": 2393
+    }
+  },
+  {
+    "year": 2022,
+    "events": 20774,
+    "casualties": 309636,
+    "avgCasualties": 14.904977375565611,
+    "byViolenceType": {
+      "stateBased": 13421,
+      "nonState": 4300,
+      "oneSided": 3053
+    }
+  },
+  {
+    "year": 2023,
+    "events": 26486,
+    "casualties": 161237,
+    "avgCasualties": 6.087631201389414,
+    "byViolenceType": {
+      "stateBased": 17726,
+      "nonState": 6027,
+      "oneSided": 2733
+    }
+  }
+]

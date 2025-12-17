@@ -1,0 +1,26 @@
+[
+  {
+    "type": 1,
+    "name": "State-based conflict",
+    "color": "#1f77b4",
+    "count": 250369,
+    "casualties": 2244519,
+    "percentage": 70.11134073738036
+  },
+  {
+    "type": 2,
+    "name": "Non-state conflict",
+    "color": "#ff7f0e",
+    "count": 49930,
+    "casualties": 373056,
+    "percentage": 13.981999540747461
+  },
+  {
+    "type": 3,
+    "name": "One-sided violence",
+    "color": "#d62728",
+    "count": 56803,
+    "casualties": 1178668,
+    "percentage": 15.906659721872183
+  }
+]

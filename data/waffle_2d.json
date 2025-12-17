@@ -1,0 +1,921 @@
+{
+  "timePeriods": [
+    "1989-1993",
+    "1994-1998",
+    "1999-2003",
+    "2004-2008",
+    "2009-2013",
+    "2014-2018",
+    "2019-2023"
+  ],
+  "casualtyRanges": [
+    "0",
+    "1-5",
+    "6-10",
+    "11-25",
+    "26-50",
+    "51-100",
+    "101-200",
+    "201-500",
+    "500+"
+  ],
+  "regions": [
+    "Africa",
+    "Americas",
+    "Asia",
+    "Europe",
+    "Middle East"
+  ],
+  "regionColors": {
+    "Africa": "#1f77b4",
+    "Americas": "#2ca02c",
+    "Asia": "#ff7f0e",
+    "Europe": "#9467bd",
+    "Middle East": "#d62728"
+  },
+  "gridData": [
+    {
+      "row": 0,
+      "col": 0,
+      "count": 1955,
+      "period": "1989-1993",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 1003,
+        "Americas": 168,
+        "Asia": 511,
+        "Europe": 167,
+        "Middle East": 106
+      }
+    },
+    {
+      "row": 0,
+      "col": 1,
+      "count": 14724,
+      "period": "1989-1993",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 3445,
+        "Americas": 1243,
+        "Asia": 1954,
+        "Europe": 6267,
+        "Middle East": 1815
+      }
+    },
+    {
+      "row": 0,
+      "col": 2,
+      "count": 2471,
+      "period": "1989-1993",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 438,
+        "Americas": 222,
+        "Asia": 599,
+        "Europe": 923,
+        "Middle East": 289
+      }
+    },
+    {
+      "row": 0,
+      "col": 3,
+      "count": 1966,
+      "period": "1989-1993",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 531,
+        "Americas": 199,
+        "Asia": 521,
+        "Europe": 570,
+        "Middle East": 145
+      }
+    },
+    {
+      "row": 0,
+      "col": 4,
+      "count": 834,
+      "period": "1989-1993",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 301,
+        "Americas": 58,
+        "Asia": 219,
+        "Europe": 196,
+        "Middle East": 60
+      }
+    },
+    {
+      "row": 0,
+      "col": 5,
+      "count": 406,
+      "period": "1989-1993",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 177,
+        "Americas": 19,
+        "Asia": 126,
+        "Europe": 61,
+        "Middle East": 23
+      }
+    },
+    {
+      "row": 0,
+      "col": 6,
+      "count": 229,
+      "period": "1989-1993",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 109,
+        "Americas": 10,
+        "Asia": 69,
+        "Europe": 33,
+        "Middle East": 8
+      }
+    },
+    {
+      "row": 0,
+      "col": 7,
+      "count": 155,
+      "period": "1989-1993",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 91,
+        "Americas": 8,
+        "Asia": 32,
+        "Europe": 12,
+        "Middle East": 12
+      }
+    },
+    {
+      "row": 0,
+      "col": 8,
+      "count": 117,
+      "period": "1989-1993",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 80,
+        "Americas": 7,
+        "Asia": 18,
+        "Europe": 5,
+        "Middle East": 7
+      }
+    },
+    {
+      "row": 1,
+      "col": 0,
+      "count": 2000,
+      "period": "1994-1998",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 1077,
+        "Americas": 104,
+        "Asia": 404,
+        "Europe": 262,
+        "Middle East": 153
+      }
+    },
+    {
+      "row": 1,
+      "col": 1,
+      "count": 13134,
+      "period": "1994-1998",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 3949,
+        "Americas": 703,
+        "Asia": 2846,
+        "Europe": 2708,
+        "Middle East": 2928
+      }
+    },
+    {
+      "row": 1,
+      "col": 2,
+      "count": 2637,
+      "period": "1994-1998",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 998,
+        "Americas": 162,
+        "Asia": 701,
+        "Europe": 282,
+        "Middle East": 494
+      }
+    },
+    {
+      "row": 1,
+      "col": 3,
+      "count": 2313,
+      "period": "1994-1998",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 1100,
+        "Americas": 90,
+        "Asia": 633,
+        "Europe": 185,
+        "Middle East": 305
+      }
+    },
+    {
+      "row": 1,
+      "col": 4,
+      "count": 1016,
+      "period": "1994-1998",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 556,
+        "Americas": 36,
+        "Asia": 225,
+        "Europe": 96,
+        "Middle East": 103
+      }
+    },
+    {
+      "row": 1,
+      "col": 5,
+      "count": 558,
+      "period": "1994-1998",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 353,
+        "Americas": 5,
+        "Asia": 128,
+        "Europe": 40,
+        "Middle East": 32
+      }
+    },
+    {
+      "row": 1,
+      "col": 6,
+      "count": 303,
+      "period": "1994-1998",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 221,
+        "Americas": 5,
+        "Asia": 53,
+        "Europe": 14,
+        "Middle East": 10
+      }
+    },
+    {
+      "row": 1,
+      "col": 7,
+      "count": 197,
+      "period": "1994-1998",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 162,
+        "Americas": 4,
+        "Asia": 19,
+        "Europe": 8,
+        "Middle East": 4
+      }
+    },
+    {
+      "row": 1,
+      "col": 8,
+      "count": 196,
+      "period": "1994-1998",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 173,
+        "Americas": 1,
+        "Asia": 18,
+        "Europe": 2,
+        "Middle East": 2
+      }
+    },
+    {
+      "row": 2,
+      "col": 0,
+      "count": 2814,
+      "period": "1999-2003",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 836,
+        "Americas": 542,
+        "Asia": 942,
+        "Europe": 396,
+        "Middle East": 98
+      }
+    },
+    {
+      "row": 2,
+      "col": 1,
+      "count": 19935,
+      "period": "1999-2003",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 2791,
+        "Americas": 6320,
+        "Asia": 9073,
+        "Europe": 602,
+        "Middle East": 1149
+      }
+    },
+    {
+      "row": 2,
+      "col": 2,
+      "count": 2498,
+      "period": "1999-2003",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 791,
+        "Americas": 497,
+        "Asia": 986,
+        "Europe": 119,
+        "Middle East": 105
+      }
+    },
+    {
+      "row": 2,
+      "col": 3,
+      "count": 1855,
+      "period": "1999-2003",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 829,
+        "Americas": 235,
+        "Asia": 598,
+        "Europe": 116,
+        "Middle East": 77
+      }
+    },
+    {
+      "row": 2,
+      "col": 4,
+      "count": 675,
+      "period": "1999-2003",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 372,
+        "Americas": 64,
+        "Asia": 182,
+        "Europe": 44,
+        "Middle East": 13
+      }
+    },
+    {
+      "row": 2,
+      "col": 5,
+      "count": 319,
+      "period": "1999-2003",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 189,
+        "Americas": 11,
+        "Asia": 86,
+        "Europe": 26,
+        "Middle East": 7
+      }
+    },
+    {
+      "row": 2,
+      "col": 6,
+      "count": 176,
+      "period": "1999-2003",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 118,
+        "Americas": 5,
+        "Asia": 38,
+        "Europe": 13,
+        "Middle East": 2
+      }
+    },
+    {
+      "row": 2,
+      "col": 7,
+      "count": 88,
+      "period": "1999-2003",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 63,
+        "Americas": 1,
+        "Asia": 17,
+        "Europe": 5,
+        "Middle East": 2
+      }
+    },
+    {
+      "row": 2,
+      "col": 8,
+      "count": 30,
+      "period": "1999-2003",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 20,
+        "Americas": 1,
+        "Asia": 3,
+        "Europe": 5,
+        "Middle East": 1
+      }
+    },
+    {
+      "row": 3,
+      "col": 0,
+      "count": 3068,
+      "period": "2004-2008",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 791,
+        "Americas": 353,
+        "Asia": 1379,
+        "Europe": 190,
+        "Middle East": 355
+      }
+    },
+    {
+      "row": 3,
+      "col": 1,
+      "count": 24645,
+      "period": "2004-2008",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 2678,
+        "Americas": 5543,
+        "Asia": 12583,
+        "Europe": 798,
+        "Middle East": 3043
+      }
+    },
+    {
+      "row": 3,
+      "col": 2,
+      "count": 2465,
+      "period": "2004-2008",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 497,
+        "Americas": 192,
+        "Asia": 1301,
+        "Europe": 57,
+        "Middle East": 418
+      }
+    },
+    {
+      "row": 3,
+      "col": 3,
+      "count": 1858,
+      "period": "2004-2008",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 496,
+        "Americas": 105,
+        "Asia": 906,
+        "Europe": 18,
+        "Middle East": 333
+      }
+    },
+    {
+      "row": 3,
+      "col": 4,
+      "count": 551,
+      "period": "2004-2008",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 184,
+        "Americas": 25,
+        "Asia": 242,
+        "Europe": 4,
+        "Middle East": 96
+      }
+    },
+    {
+      "row": 3,
+      "col": 5,
+      "count": 207,
+      "period": "2004-2008",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 86,
+        "Americas": 8,
+        "Asia": 70,
+        "Europe": 4,
+        "Middle East": 39
+      }
+    },
+    {
+      "row": 3,
+      "col": 6,
+      "count": 77,
+      "period": "2004-2008",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 45,
+        "Americas": 5,
+        "Asia": 15,
+        "Europe": 3,
+        "Middle East": 9
+      }
+    },
+    {
+      "row": 3,
+      "col": 7,
+      "count": 22,
+      "period": "2004-2008",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 11,
+        "Americas": 3,
+        "Asia": 2,
+        "Europe": 2,
+        "Middle East": 4
+      }
+    },
+    {
+      "row": 3,
+      "col": 8,
+      "count": 11,
+      "period": "2004-2008",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 6,
+        "Americas": 2,
+        "Asia": 0,
+        "Europe": 0,
+        "Middle East": 3
+      }
+    },
+    {
+      "row": 4,
+      "col": 0,
+      "count": 4983,
+      "period": "2009-2013",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 1053,
+        "Americas": 335,
+        "Asia": 1018,
+        "Europe": 324,
+        "Middle East": 2253
+      }
+    },
+    {
+      "row": 4,
+      "col": 1,
+      "count": 48946,
+      "period": "2009-2013",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 3961,
+        "Americas": 3330,
+        "Asia": 14072,
+        "Europe": 878,
+        "Middle East": 26705
+      }
+    },
+    {
+      "row": 4,
+      "col": 2,
+      "count": 6585,
+      "period": "2009-2013",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 900,
+        "Americas": 268,
+        "Asia": 1915,
+        "Europe": 57,
+        "Middle East": 3445
+      }
+    },
+    {
+      "row": 4,
+      "col": 3,
+      "count": 3818,
+      "period": "2009-2013",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 732,
+        "Americas": 112,
+        "Asia": 1137,
+        "Europe": 20,
+        "Middle East": 1817
+      }
+    },
+    {
+      "row": 4,
+      "col": 4,
+      "count": 990,
+      "period": "2009-2013",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 289,
+        "Americas": 27,
+        "Asia": 282,
+        "Europe": 2,
+        "Middle East": 390
+      }
+    },
+    {
+      "row": 4,
+      "col": 5,
+      "count": 310,
+      "period": "2009-2013",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 111,
+        "Americas": 17,
+        "Asia": 81,
+        "Europe": 1,
+        "Middle East": 100
+      }
+    },
+    {
+      "row": 4,
+      "col": 6,
+      "count": 95,
+      "period": "2009-2013",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 42,
+        "Americas": 12,
+        "Asia": 20,
+        "Europe": 0,
+        "Middle East": 21
+      }
+    },
+    {
+      "row": 4,
+      "col": 7,
+      "count": 61,
+      "period": "2009-2013",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 27,
+        "Americas": 19,
+        "Asia": 8,
+        "Europe": 0,
+        "Middle East": 7
+      }
+    },
+    {
+      "row": 4,
+      "col": 8,
+      "count": 19,
+      "period": "2009-2013",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 2,
+        "Americas": 11,
+        "Asia": 3,
+        "Europe": 0,
+        "Middle East": 3
+      }
+    },
+    {
+      "row": 5,
+      "col": 0,
+      "count": 6210,
+      "period": "2014-2018",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 1362,
+        "Americas": 452,
+        "Asia": 1168,
+        "Europe": 68,
+        "Middle East": 3160
+      }
+    },
+    {
+      "row": 5,
+      "col": 1,
+      "count": 66446,
+      "period": "2014-2018",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 6826,
+        "Americas": 2500,
+        "Asia": 11294,
+        "Europe": 3192,
+        "Middle East": 42634
+      }
+    },
+    {
+      "row": 5,
+      "col": 2,
+      "count": 9839,
+      "period": "2014-2018",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 1509,
+        "Americas": 192,
+        "Asia": 2864,
+        "Europe": 87,
+        "Middle East": 5187
+      }
+    },
+    {
+      "row": 5,
+      "col": 3,
+      "count": 7114,
+      "period": "2014-2018",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 1301,
+        "Americas": 61,
+        "Asia": 1887,
+        "Europe": 41,
+        "Middle East": 3824
+      }
+    },
+    {
+      "row": 5,
+      "col": 4,
+      "count": 2260,
+      "period": "2014-2018",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 523,
+        "Americas": 25,
+        "Asia": 480,
+        "Europe": 16,
+        "Middle East": 1216
+      }
+    },
+    {
+      "row": 5,
+      "col": 5,
+      "count": 756,
+      "period": "2014-2018",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 180,
+        "Americas": 13,
+        "Asia": 150,
+        "Europe": 5,
+        "Middle East": 408
+      }
+    },
+    {
+      "row": 5,
+      "col": 6,
+      "count": 220,
+      "period": "2014-2018",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 63,
+        "Americas": 23,
+        "Asia": 27,
+        "Europe": 8,
+        "Middle East": 99
+      }
+    },
+    {
+      "row": 5,
+      "col": 7,
+      "count": 115,
+      "period": "2014-2018",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 23,
+        "Americas": 30,
+        "Asia": 9,
+        "Europe": 4,
+        "Middle East": 49
+      }
+    },
+    {
+      "row": 5,
+      "col": 8,
+      "count": 43,
+      "period": "2014-2018",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 4,
+        "Americas": 20,
+        "Asia": 5,
+        "Europe": 0,
+        "Middle East": 14
+      }
+    },
+    {
+      "row": 6,
+      "col": 0,
+      "count": 7046,
+      "period": "2019-2023",
+      "casualty": "0",
+      "regionCounts": {
+        "Africa": 2604,
+        "Americas": 588,
+        "Asia": 2579,
+        "Europe": 163,
+        "Middle East": 1112
+      }
+    },
+    {
+      "row": 6,
+      "col": 1,
+      "count": 68500,
+      "period": "2019-2023",
+      "casualty": "1-5",
+      "regionCounts": {
+        "Africa": 11657,
+        "Americas": 18177,
+        "Asia": 13057,
+        "Europe": 16344,
+        "Middle East": 9265
+      }
+    },
+    {
+      "row": 6,
+      "col": 2,
+      "count": 7599,
+      "period": "2019-2023",
+      "casualty": "6-10",
+      "regionCounts": {
+        "Africa": 2278,
+        "Americas": 313,
+        "Asia": 3414,
+        "Europe": 563,
+        "Middle East": 1031
+      }
+    },
+    {
+      "row": 6,
+      "col": 3,
+      "count": 5275,
+      "period": "2019-2023",
+      "casualty": "11-25",
+      "regionCounts": {
+        "Africa": 1815,
+        "Americas": 144,
+        "Asia": 2026,
+        "Europe": 436,
+        "Middle East": 854
+      }
+    },
+    {
+      "row": 6,
+      "col": 4,
+      "count": 2011,
+      "period": "2019-2023",
+      "casualty": "26-50",
+      "regionCounts": {
+        "Africa": 692,
+        "Americas": 69,
+        "Asia": 361,
+        "Europe": 538,
+        "Middle East": 351
+      }
+    },
+    {
+      "row": 6,
+      "col": 5,
+      "count": 887,
+      "period": "2019-2023",
+      "casualty": "51-100",
+      "regionCounts": {
+        "Africa": 195,
+        "Americas": 133,
+        "Asia": 73,
+        "Europe": 369,
+        "Middle East": 117
+      }
+    },
+    {
+      "row": 6,
+      "col": 6,
+      "count": 285,
+      "period": "2019-2023",
+      "casualty": "101-200",
+      "regionCounts": {
+        "Africa": 75,
+        "Americas": 76,
+        "Asia": 16,
+        "Europe": 63,
+        "Middle East": 55
+      }
+    },
+    {
+      "row": 6,
+      "col": 7,
+      "count": 100,
+      "period": "2019-2023",
+      "casualty": "201-500",
+      "regionCounts": {
+        "Africa": 26,
+        "Americas": 26,
+        "Asia": 1,
+        "Europe": 32,
+        "Middle East": 15
+      }
+    },
+    {
+      "row": 6,
+      "col": 8,
+      "count": 84,
+      "period": "2019-2023",
+      "casualty": "500+",
+      "regionCounts": {
+        "Africa": 18,
+        "Americas": 20,
+        "Asia": 1,
+        "Europe": 39,
+        "Middle East": 6
+      }
+    }
+  ],
+  "maxEvents": 68500
+}

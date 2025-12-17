@@ -1,0 +1,93 @@
+{
+  "periods": [
+    "89-94",
+    "95-99",
+    "00-04",
+    "05-09",
+    "10-14",
+    "15-19",
+    "20-23"
+  ],
+  "regions": [
+    "Africa",
+    "Americas",
+    "Asia",
+    "Europe",
+    "Middle East"
+  ],
+  "regionColors": {
+    "Africa": "#1f77b4",
+    "Americas": "#2ca02c",
+    "Asia": "#ff7f0e",
+    "Europe": "#9467bd",
+    "Middle East": "#d62728"
+  },
+  "data": [
+    {
+      "region": "Africa",
+      "values": [
+        1626,
+        1290,
+        1144,
+        1008,
+        1590,
+        2494,
+        4111
+      ],
+      "color": "#1f77b4"
+    },
+    {
+      "region": "Americas",
+      "values": [
+        359,
+        276,
+        1811,
+        1036,
+        722,
+        976,
+        4423
+      ],
+      "color": "#2ca02c"
+    },
+    {
+      "region": "Asia",
+      "values": [
+        818,
+        1179,
+        2730,
+        3412,
+        3548,
+        4029,
+        4013
+      ],
+      "color": "#ff7f0e"
+    },
+    {
+      "region": "Europe",
+      "values": [
+        1702,
+        408,
+        235,
+        226,
+        474,
+        447,
+        4580
+      ],
+      "color": "#9467bd"
+    },
+    {
+      "region": "Middle East",
+      "values": [
+        567,
+        686,
+        381,
+        821,
+        10587,
+        8235,
+        2359
+      ],
+      "color": "#d62728"
+    }
+  ],
+  "maxValue": 10587
+}
