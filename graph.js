@@ -64,6 +64,13 @@ function initializeMap() {
         .on("zoom", (event) => {
             container.attr("transform", event.transform);
             viewState.zoomScale = event.transform.k;
+            viewState.zoomTransform = event.transform;
+
+            // Update canvas transform for bubble positioning
+            if (canvasBubbleRenderer.canvas) {
+                canvasBubbleRenderer.updateTransform(event.transform);
+            }
+
             debouncedZoomUpdate();
         });
 
@@ -543,58 +550,82 @@ function drawIndividualEventBubbles() {
             const factionName = viewState.selectedFaction;
             const side_a = e.side_a || '';
             const side_b = e.side_b || '';
-            // Check if faction appears in either side_a or side_b
             return side_a.includes(factionName) || side_b.includes(factionName);
         });
     }
 
-    const maxCasualties = d3.max(events, d => d.best);
-    const zoomFactor = viewState.zoomScale;
+    // Clear SVG bubbles first
+    bubblesGroup.selectAll(".event-bubble").remove();
 
-    // Scale bubbles inversely with zoom - smaller when zoomed in
-    const baseRange = [3 / zoomFactor, 20 / zoomFactor];
+    if (events.length === 0) {
+        if (canvasBubbleRenderer.canvas) {
+            canvasBubbleRenderer.clear();
+        }
+        return;
+    }
+
+    const maxCasualties = d3.max(events, d => d.best) || 1;
+    const zoomFactor = viewState.zoomScale || 1;
 
     const radiusScale = d3.scaleSqrt()
         .domain([0, maxCasualties])
-        .range(baseRange);
+        .range([3 / zoomFactor, 20 / zoomFactor]);
 
-    const eventBubbles = bubblesGroup.selectAll(".event-bubble")
-        .data(events, (d, i) => `${d.country}-${d.year}-${i}`);
+    // Initialize Canvas renderer if needed
+    const mapSection = document.querySelector('.map-section');
 
-    eventBubbles.exit().remove(); // Remove immediately for performance
-
-    const enter = eventBubbles.enter()
-        .append("circle")
-        .attr("class", "event-bubble")
-        .attr("cx", d => projection([d.longitude, d.latitude])[0])
-        .attr("cy", d => projection([d.longitude, d.latitude])[1])
-        .attr("r", d => radiusScale(d.best))
-        .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-        .style("cursor", "pointer")
-        .classed("selected-event", d => viewState.selectedEvent && d === viewState.selectedEvent)
-        .classed("unselected-event", d => viewState.selectedEvent && d !== viewState.selectedEvent)
-        .on("mouseover", showEventTooltip)
-        .on("mouseout", hideEventTooltip)
-        .on("click", (event, d) => {
-            event.stopPropagation();
-            selectEvent(d);
-        });
-
-    if (events.length < 500) {
-        enter.attr("r", 0)
-            .transition()
-            .duration(800)
-            .attr("r", d => radiusScale(d.best));
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
     }
 
-    // Update existing bubbles - use classes for selection state
-    eventBubbles
-        .attr("cx", d => projection([d.longitude, d.latitude])[0])
-        .attr("cy", d => projection([d.longitude, d.latitude])[1])
-        .attr("r", d => radiusScale(d.best))
-        .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-        .classed("selected-event", d => viewState.selectedEvent && d === viewState.selectedEvent)
-        .classed("unselected-event", d => viewState.selectedEvent && d !== viewState.selectedEvent);
+    canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
+
+    // Set event handlers for Canvas bubbles
+    canvasBubbleRenderer.onClick = (event, bubble) => {
+        selectEvent(bubble.data);
+    };
+
+    canvasBubbleRenderer.onHover = (event, bubble) => {
+        showEventTooltipGraph(event, bubble.data);
+    };
+
+    canvasBubbleRenderer.onHoverEnd = () => {
+        hideEventTooltipGraph();
+    };
+
+    // Handle click on empty canvas area - exit event detail view
+    canvasBubbleRenderer.onEmptyClick = (event) => {
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            canvasBubbleRenderer.clearSelection();
+
+            // Refresh view
+            if (viewState.selectedCountryData) {
+                updateAllCharts();
+                updateLeftPanel();
+            }
+        }
+    };
+
+    // Use progressive loading for large datasets (>500 events)
+    if (events.length > 500) {
+        canvasBubbleRenderer.setBubblesProgressive(events, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    } else {
+        canvasBubbleRenderer.setBubbles(events, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    }
+
+    // Update transform to match current zoom
+    if (viewState.zoomTransform) {
+        canvasBubbleRenderer.updateTransform(viewState.zoomTransform);
+    }
 }
 
 function selectEvent(event) {
@@ -1538,42 +1569,92 @@ function drawFactionBubbles(events) {
         e.latitude != null && e.longitude != null
     );
 
-    if (eventsWithCoords.length === 0) return;
+    // Clear SVG bubbles
+    bubblesGroup.selectAll(".event-bubble").remove();
+
+    if (eventsWithCoords.length === 0) {
+        if (canvasBubbleRenderer.canvas) {
+            canvasBubbleRenderer.clear();
+        }
+        return;
+    }
 
     // Scale bubbles by casualties
     const maxCasualties = d3.max(eventsWithCoords, e => e.best) || 1;
     const zoomFactor = viewState.zoomScale || 1;
-    const baseRange = [3 / zoomFactor, 20 / zoomFactor];
 
     const radiusScale = d3.scaleSqrt()
         .domain([0, maxCasualties])
-        .range(baseRange);
+        .range([3 / zoomFactor, 20 / zoomFactor]);
 
-    // Enter new bubbles
-    const bubbles = bubblesGroup.selectAll(".event-bubble")
-        .data(eventsWithCoords, d => d.id || `${d.country}-${d.year}-${d.latitude}-${d.longitude}`)
-        .join(
-            enter => enter.append("circle")
-                .attr("class", "event-bubble")
-                .attr("cx", d => projection([d.longitude, d.latitude])[0])
-                .attr("cy", d => projection([d.longitude, d.latitude])[1])
-                .attr("r", 0)
-                .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-                .style("opacity", 0)
-                .style("cursor", "pointer")
-                .on("click", (event, d) => {
-                    event.stopPropagation();
-                    selectEvent(d);
-                }),
-            update => update,
-            exit => exit.remove()
-        );
+    // Initialize canvas if needed
+    const mapSection = document.querySelector('.map-section');
+    if (!canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
 
-    // Animate bubbles in
-    bubbles.transition()
-        .duration(800)
-        .attr("r", d => radiusScale(d.best))
-        .style("opacity", 0.7);
+        // Set event handlers
+        canvasBubbleRenderer.onClick = (event, bubble) => {
+            selectEvent(bubble.data);
+        };
+
+        canvasBubbleRenderer.onHover = (event, bubble) => {
+            showEventTooltipGraph(event, bubble.data);
+        };
+
+        canvasBubbleRenderer.onHoverEnd = () => {
+            hideEventTooltipGraph();
+        };
+    }
+
+    // Use progressive loading for large datasets (>500 events)
+    if (eventsWithCoords.length > 500) {
+        canvasBubbleRenderer.setBubblesProgressive(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    } else {
+        canvasBubbleRenderer.setBubbles(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    }
+
+    // Update transform to match current zoom
+    if (viewState.zoomTransform) {
+        canvasBubbleRenderer.updateTransform(viewState.zoomTransform);
+    }
+}
+
+// Tooltip helpers for Canvas bubbles (graph.js)
+function showEventTooltipGraph(mouseEvent, eventData) {
+    const tooltip = d3.select("body").selectAll(".canvas-tooltip").data([0])
+        .join("div")
+        .attr("class", "canvas-tooltip")
+        .style("position", "absolute")
+        .style("background", "rgba(15, 23, 42, 0.95)")
+        .style("color", "white")
+        .style("padding", "8px 12px")
+        .style("border-radius", "6px")
+        .style("font-size", "12px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("max-width", "250px");
+
+    tooltip
+        .style("left", (mouseEvent.clientX + 10) + "px")
+        .style("top", (mouseEvent.clientY - 10) + "px")
+        .html(`
+            <div style="font-weight: 600; margin-bottom: 4px;">${eventData.dyad_name || eventData.conflict_name}</div>
+            <div>${eventData.year} • ${eventData.country}</div>
+            <div style="color: ${TYPE_COLORS[eventData.type_of_violence_name] || '#64748b'};">${eventData.type_of_violence_name}</div>
+            <div style="color: #ef4444; font-weight: 600;">${d3.format(",d")(eventData.best)} casualties</div>
+        `);
+}
+
+function hideEventTooltipGraph() {
+    d3.select(".canvas-tooltip").remove();
 }
 
 // Draw country aggregated bubbles for multi-country faction view (like drawConflictBubbles)
@@ -4102,6 +4183,16 @@ function updateFactionViewForYear(year) {
 function drawFactionBubblesProgressive(events, currentYear) {
     const eventsWithCoords = events.filter(e => e.latitude && e.longitude);
 
+    // Clear SVG bubbles
+    bubblesGroup.selectAll(".event-bubble").remove();
+
+    if (eventsWithCoords.length === 0) {
+        if (canvasBubbleRenderer.canvas) {
+            canvasBubbleRenderer.clear();
+        }
+        return;
+    }
+
     const maxCasualties = d3.max(eventsWithCoords, e => e.best) || 1;
     const zoomFactor = viewState.zoomScale || 1;
     const radiusScale = d3.scaleSqrt()
@@ -4111,40 +4202,62 @@ function drawFactionBubblesProgressive(events, currentYear) {
     // Find max year in current data for "new" determination
     const latestEventYear = d3.max(eventsWithCoords, e => e.year) || currentYear;
 
-    // D3 data join
-    const bubbles = bubblesGroup.selectAll(".event-bubble")
-        .data(eventsWithCoords, d => `${d.country}-${d.year}-${d.latitude?.toFixed(4)}-${d.longitude?.toFixed(4)}`);
+    // Initialize Canvas renderer if needed
+    const mapSection = document.querySelector('.map-section');
 
-    // Exit: fade out removed events
-    bubbles.exit()
-        .transition().duration(300)
-        .attr("r", 0)
-        .style("opacity", 0)
-        .remove();
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
+    }
 
-    // Enter: new events appear with original color
-    bubbles.enter()
-        .append("circle")
-        .attr("class", "event-bubble")
-        .attr("cx", d => projection([d.longitude, d.latitude])[0])
-        .attr("cy", d => projection([d.longitude, d.latitude])[1])
-        .attr("r", 0)
-        .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-        .style("opacity", 0)
-        .style("cursor", "pointer")
-        .on("click", (event, d) => { event.stopPropagation(); selectEvent(d); })
-        .on("mouseover", showEventTooltip)
-        .on("mouseout", hideEventTooltip)
-        .transition().duration(400)
-        .attr("r", d => radiusScale(d.best))
-        .style("opacity", 0.8);
+    canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
 
-    // Update: existing events - gray out older ones
-    bubbles
-        .transition().duration(300)
-        .attr("r", d => radiusScale(d.best))
-        .style("fill", d => d.year < latestEventYear ? "#94a3b8" : TYPE_COLORS[d.type_of_violence_name])
-        .style("opacity", d => d.year < latestEventYear ? 0.5 : 0.8);
+    // Set event handlers
+    canvasBubbleRenderer.onClick = (event, bubble) => {
+        selectEvent(bubble.data);
+    };
+
+    canvasBubbleRenderer.onHover = (event, bubble) => {
+        showEventTooltipGraph(event, bubble.data);
+    };
+
+    canvasBubbleRenderer.onHoverEnd = () => {
+        hideEventTooltipGraph();
+    };
+
+    canvasBubbleRenderer.onEmptyClick = (event) => {
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            canvasBubbleRenderer.clearSelection();
+        }
+    };
+
+    // Color function: older events are grayed out
+    const colorFn = d => {
+        if (d.year < latestEventYear) {
+            return '#94a3b8'; // Gray for older events
+        }
+        return TYPE_COLORS[d.type_of_violence_name] || '#64748b';
+    };
+
+    // Use Canvas rendering
+    if (eventsWithCoords.length > 500) {
+        canvasBubbleRenderer.setBubblesProgressive(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: colorFn
+        });
+    } else {
+        canvasBubbleRenderer.setBubbles(eventsWithCoords, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: colorFn
+        });
+    }
+
+    // Update transform to match current zoom
+    if (viewState.zoomTransform) {
+        canvasBubbleRenderer.updateTransform(viewState.zoomTransform);
+    }
 }
 
 // Update faction panel statistics without rebuilding entire panel
@@ -4362,6 +4475,11 @@ function returnToWorldView() {
         .transition()
         .duration(500)
         .style("opacity", 1);
+
+    // Clear canvas bubbles
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
+    }
 
     // Clear event bubbles
     bubblesGroup.selectAll(".event-bubble").remove();
@@ -5050,19 +5168,28 @@ function updateFactionRankings(factions) {
     // Update left panel statistics to reflect filtered factions
     updateGraphStatistics(factions);
 
-    panel.append("h3")
-        .style("margin", "0 0 15px 0")
-        .style("font-size", "18px")
-        .text("Top Factions by Casualties");
+    // Header matching Top Countries style
+    panel.append("div")
+        .attr("class", "charts-header")
+        .html(`
+            <h3 id="charts-title" style="margin: 0 0 5px 0; font-size: 18px;">Top Factions by Casualties</h3>
+            <p id="charts-subtitle" style="margin: 0; font-size: 14px; color: #64748b;">Click to focus, Double-click for details</p>
+        `);
 
+    // Same number as Top Countries (15)
     const topFactions = factions
         .sort((a, b) => b.casualties - a.casualties)
-        .slice(0, 20);
+        .slice(0, 15);
 
-    const list = panel.append("div")
-        .attr("class", "events-list")
-        .style("overflow-y", "auto")
-        .style("flex", "1");
+    // List container matching Top Countries
+    const listContainer = panel.append("div")
+        .attr("id", "top-factions-list")
+        .attr("class", "chart-container")
+        .style("flex", "1")
+        .style("display", "block");
+
+    const list = listContainer.append("div")
+        .attr("class", "events-list");
 
     topFactions.forEach((faction, index) => {
         const item = list.append("div")
@@ -5102,25 +5229,19 @@ function updateFactionRankings(factions) {
             }
         });
 
-        // Title with ranking number inline
+        // Title with ranking number - same format as Top Countries
+        // Truncate to match (35 chars max)
+        const displayName = faction.id.length > 35 ? faction.id.substring(0, 32) + "..." : faction.id;
         item.append("div")
             .attr("class", "event-item-title")
-            .style("display", "flex")
-            .style("align-items", "baseline")
-            .style("gap", "0.5rem")
-            .html(`
-                <span style="font-weight: bold; color: #6b7280; font-size: 0.85rem;">${index + 1}.</span>
-                <span style="flex: 1;">${faction.id.length > 45 ? faction.id.substring(0, 42) + "..." : faction.id}</span>
-            `);
+            .text(`${index + 1}. ${displayName}`);
 
-        // Meta information
+        // Meta information - same format as Top Countries
         item.append("div")
             .attr("class", "event-item-meta")
-            .html(`
-                ${faction.country} • 
-                <strong style="color: #ef4444;">${d3.format(",d")(faction.casualties)}</strong> casualties • 
-                ${faction.participation} events
-            `);
+            .html(`<span style="color: ${REGION_COLORS[faction.region] || '#64748b'};">${faction.region || faction.country}</span> • 
+                   <strong style="color: #ef4444;">${d3.format(",d")(faction.casualties)}</strong> casualties • 
+                   ${d3.format(",d")(faction.participation)} events`);
     });
 }
 
@@ -5415,7 +5536,7 @@ function displayFactionInfo(factionData, allNodes, links) {
 
         const heatmapSvg = heatmapContainer.append("svg")
             .attr("width", "100%")
-            .attr("height", 50);
+            .attr("height", 60);
 
         const cellWidth = Math.max(8, Math.min(15, 280 / years.length));
 
@@ -5423,7 +5544,7 @@ function displayFactionInfo(factionData, allNodes, links) {
             const intensity = yearData.get(year) / maxCas;
             heatmapSvg.append("rect")
                 .attr("x", i * (cellWidth + 2))
-                .attr("y", 0)
+                .attr("y", 10)
                 .attr("width", cellWidth)
                 .attr("height", 30)
                 .attr("fill", d3.interpolateReds(intensity))
@@ -5431,16 +5552,18 @@ function displayFactionInfo(factionData, allNodes, links) {
                 .append("title").text(`${year}: ${d3.format(",d")(yearData.get(year))} casualties`);
         });
 
-        // Year labels (every 5 years)
-        years.filter((y, i) => i % Math.ceil(years.length / 6) === 0).forEach((year, i) => {
+        // Year labels (every 3 years)
+        years.filter(y => y % 3 === 0).forEach((year) => {
             const idx = years.indexOf(year);
-            heatmapSvg.append("text")
-                .attr("x", idx * (cellWidth + 2) + cellWidth / 2)
-                .attr("y", 45)
-                .attr("text-anchor", "middle")
-                .style("font-size", "8px")
-                .style("fill", "#64748b")
-                .text(year);
+            if (idx >= 0) {
+                heatmapSvg.append("text")
+                    .attr("x", idx * (cellWidth + 2) + cellWidth / 2)
+                    .attr("y", 55)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "9px")
+                    .style("fill", "#64748b")
+                    .text(year);
+            }
         });
     }
 
@@ -6498,12 +6621,12 @@ function navigateToFactionDetailView(factionData) {
     // Get unique countries
     const countries = [...new Set(factionEvents.map(e => e.country))].sort();
 
-    // Hide graph container, show world map
+    // Hide graph container, show world map with smooth transition
     const graphContainer = document.getElementById('graph-container');
     const worldMap = document.getElementById('world-map');
 
-    if (graphContainer) graphContainer.style.display = 'none';
-    if (worldMap) worldMap.style.display = 'block';
+    if (graphContainer) graphContainer.classList.remove('active');
+    if (worldMap) worldMap.classList.remove('hidden'); ve('hidden');
 
     // Store faction data for reference (reset country filter)
     viewState.mode = 'faction';

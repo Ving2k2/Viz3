@@ -83,9 +83,14 @@ function returnToWorldView() {
         .duration(500)
         .call(zoom.transform, d3.zoomIdentity);
 
-    // Clear bubbles
+    // Clear SVG bubbles
     bubblesGroup.selectAll(".event-bubble").remove();
     bubblesGroup.selectAll(".capital-marker").remove();
+
+    // Destroy Canvas bubbles completely to prevent blocking SVG interactions
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
+    }
 
     // Restore world view
     mapGroup.selectAll(".country")
@@ -159,6 +164,13 @@ function initializeMap() {
         .on("zoom", (event) => {
             container.attr("transform", event.transform);
             viewState.zoomScale = event.transform.k;
+            viewState.zoomTransform = event.transform;
+
+            // Update canvas transform for bubble positioning
+            if (canvasBubbleRenderer.canvas) {
+                canvasBubbleRenderer.updateTransform(event.transform);
+            }
+
             debouncedZoomUpdate();
         });
 
@@ -386,6 +398,32 @@ function findCountryFeature(countryName) {
 
 function handleCountryClick(event, d) {
     event.stopPropagation();
+
+    // If in event detail view, clicking on map exits to country view
+    if (viewState.selectedEvent && (viewState.mode === 'event' || viewState.mode === 'country')) {
+        viewState.selectedEvent = null;
+
+        // Clear canvas bubble selection
+        if (canvasBubbleRenderer.canvas) {
+            canvasBubbleRenderer.clearSelection();
+        }
+
+        // Clear SVG bubble selection classes
+        bubblesGroup.selectAll(".event-bubble")
+            .classed("selected-event", false)
+            .classed("unselected-event", false);
+
+        // Ensure mode is country (not event)
+        viewState.mode = 'country';
+
+        // Refresh country view panels
+        if (viewState.selectedCountryData) {
+            updateAllCharts();
+            updateCountryPanel();
+        }
+        return;
+    }
+
     const countryName = d.properties.name;
 
     const countryConflictData = processedData.find(c =>
@@ -411,14 +449,19 @@ function handleBubbleClick(event, d) {
 // ============================================================================
 
 function enterCountryView(countryFeature, countryName, countryConflictData) {
+    console.log('[DEBUG] enterCountryView called for:', countryName);
     viewState.previousMode = viewState.mode;
     viewState.mode = 'country';
+    console.log('[DEBUG] viewState.mode set to:', viewState.mode);
     viewState.selectedCountryName = countryName;
     viewState.selectedCountryData = countryConflictData;
     viewState.selectedEvent = null;
 
-    // Clear existing bubbles
+    // Clear existing bubbles (SVG and Canvas)
     bubblesGroup.selectAll("*").remove();
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.clear();
+    }
 
     // Hide decorations
     mapGroup.select(".sphere").style("opacity", 0).style("display", "none");
@@ -465,7 +508,10 @@ function zoomToCountry(countryFeature) {
     const dy = bounds[1][1] - bounds[0][1];
     const x = (bounds[0][0] + bounds[1][0]) / 2;
     const y = (bounds[0][1] + bounds[1][1]) / 2;
-    const scale = Math.max(1, Math.min(8, 0.9 / Math.max(dx / mapWidth, dy / mapHeight)));
+
+    // Scale so country occupies ~2/3 of screen (0.67 factor)
+    // Increased max scale to 50 for small countries to be clearly visible
+    const scale = Math.max(1, Math.min(50, 0.67 / Math.max(dx / mapWidth, dy / mapHeight)));
     const translate = [mapWidth / 2 - scale * x, mapHeight / 2 - scale * y];
 
     svg.transition()
@@ -485,7 +531,10 @@ function drawEventBubbles() {
 
     const currentYear = +document.getElementById('year-slider').value;
     let events = viewState.selectedCountryData.eventsWithCoords || viewState.selectedCountryData.events || [];
+    console.log('[DEBUG] drawEventBubbles - currentYear:', currentYear, 'total events before filter:', events.length);
+
     events = events.filter(e => e.year <= currentYear && e.latitude && e.longitude);
+    console.log('[DEBUG] drawEventBubbles - events after year filter:', events.length);
 
     // Apply violence type filter
     if (viewState.selectedViolenceType) {
@@ -501,56 +550,132 @@ function drawEventBubbles() {
         });
     }
 
-    if (events.length === 0) return;
+    // Clear SVG bubbles
+    bubblesGroup.selectAll(".event-bubble").remove();
+
+    if (events.length === 0) {
+        canvasBubbleRenderer.clear();
+        return;
+    }
 
     const maxCasualties = d3.max(events, e => e.best) || 1;
     const zoomFactor = viewState.zoomScale || 1;
-    const baseRange = [3 / zoomFactor, 20 / zoomFactor];
 
-    const radiusScale = d3.scaleSqrt()
-        .domain([0, maxCasualties])
-        .range(baseRange);
-
-    // D3 join pattern (like graph.js drawFactionBubbles)
-    const bubbles = bubblesGroup.selectAll(".event-bubble")
-        .data(events, d => d.id || `${d.country}-${d.year}-${d.latitude}-${d.longitude}`)
-        .join(
-            enter => enter.append("circle")
-                .attr("class", "event-bubble")
-                .attr("cx", d => projection([d.longitude, d.latitude])[0])
-                .attr("cy", d => projection([d.longitude, d.latitude])[1])
-                .attr("r", 0)
-                .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
-                .style("opacity", 0)
-                .style("cursor", "pointer")
-                .on("click", (event, d) => {
-                    event.stopPropagation();
-                    selectEvent(d);
-                }),
-            update => update,
-            exit => exit.remove()
-        );
-
-    // Animate bubbles in
-    bubbles.transition()
-        .duration(800)
-        .attr("r", d => radiusScale(d.best))
-        .style("opacity", 0.7);
-}
-
-function updateEventBubbleSizes() {
-    if (!viewState.selectedCountryData) return;
-
-    const currentYear = +document.getElementById('year-slider').value;
-    let events = viewState.selectedCountryData.eventsWithCoords || viewState.selectedCountryData.events || [];
-    events = events.filter(e => e.year <= currentYear && e.latitude && e.longitude);
-
-    const maxCasualties = d3.max(events, e => e.best) || 1;
-    const zoomFactor = viewState.zoomScale || 1;
     const radiusScale = d3.scaleSqrt()
         .domain([0, maxCasualties])
         .range([3 / zoomFactor, 20 / zoomFactor]);
 
+    // ALWAYS destroy and reinitialize canvas to ensure correct projection
+    const mapSection = document.querySelector('.map-section');
+
+    // Destroy existing canvas
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.destroy();
+    }
+
+    // Reinitialize with current dimensions and projection
+    canvasBubbleRenderer.initialize(mapSection, mapWidth, mapHeight, projection);
+
+    // Set event handlers
+    canvasBubbleRenderer.onClick = (event, bubble) => {
+        selectEvent(bubble.data);
+    };
+
+    canvasBubbleRenderer.onHover = (event, bubble) => {
+        showEventTooltip(event, bubble.data);
+    };
+
+    canvasBubbleRenderer.onHoverEnd = () => {
+        hideEventTooltip();
+    };
+
+    // Handle click on empty canvas area - exit event detail view
+    canvasBubbleRenderer.onEmptyClick = (event) => {
+        if (viewState.selectedEvent) {
+            viewState.selectedEvent = null;
+            canvasBubbleRenderer.clearSelection();
+
+            // Ensure mode is country (not event)
+            viewState.mode = 'country';
+
+            // Refresh country view panels
+            if (viewState.selectedCountryData) {
+                updateAllCharts();
+                updateCountryPanel();
+            }
+        }
+    };
+
+    // Use progressive loading for large datasets (>500 events)
+    console.log('[DEBUG] Setting canvas bubbles, count:', events.length);
+    if (events.length > 500) {
+        canvasBubbleRenderer.setBubblesProgressive(events, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    } else {
+        // Set bubbles using Canvas
+        canvasBubbleRenderer.setBubbles(events, {
+            type: 'event',
+            radiusScale: radiusScale,
+            colorFn: d => TYPE_COLORS[d.type_of_violence_name] || '#64748b'
+        });
+    }
+
+    // Update transform to match current zoom
+    if (viewState.zoomTransform) {
+        canvasBubbleRenderer.updateTransform(viewState.zoomTransform);
+    }
+}
+
+// Tooltip helpers for Canvas bubbles
+function showEventTooltip(mouseEvent, eventData) {
+    const tooltip = d3.select("body").selectAll(".canvas-tooltip").data([0])
+        .join("div")
+        .attr("class", "canvas-tooltip")
+        .style("position", "absolute")
+        .style("background", "rgba(15, 23, 42, 0.95)")
+        .style("color", "white")
+        .style("padding", "8px 12px")
+        .style("border-radius", "6px")
+        .style("font-size", "12px")
+        .style("pointer-events", "none")
+        .style("z-index", "1000")
+        .style("max-width", "250px");
+
+    tooltip
+        .style("left", (mouseEvent.clientX + 10) + "px")
+        .style("top", (mouseEvent.clientY - 10) + "px")
+        .html(`
+            <div style="font-weight: 600; margin-bottom: 4px;">${eventData.dyad_name || eventData.conflict_name}</div>
+            <div>${eventData.year} • ${eventData.country}</div>
+            <div style="color: ${TYPE_COLORS[eventData.type_of_violence_name] || '#64748b'};">${eventData.type_of_violence_name}</div>
+            <div style="color: #ef4444; font-weight: 600;">${d3.format(",d")(eventData.best)} casualties</div>
+        `);
+}
+
+function hideEventTooltip() {
+    d3.select(".canvas-tooltip").remove();
+}
+
+function updateEventBubbleSizes() {
+    // Canvas handles its own sizing through updateBubbleSizes
+    if (canvasBubbleRenderer.canvas && canvasBubbleRenderer.bubbles.length > 0) {
+        const currentYear = +document.getElementById('year-slider').value;
+        let events = viewState.selectedCountryData?.eventsWithCoords || viewState.selectedCountryData?.events || [];
+        events = events.filter(e => e.year <= currentYear && e.latitude && e.longitude);
+
+        const maxCasualties = d3.max(events, e => e.best) || 1;
+        const zoomFactor = viewState.zoomScale || 1;
+        const radiusScale = d3.scaleSqrt()
+            .domain([0, maxCasualties])
+            .range([3 / zoomFactor, 20 / zoomFactor]);
+
+        canvasBubbleRenderer.updateBubbleSizes(radiusScale);
+    }
+
+    // Fallback to SVG if still using SVG bubbles
     bubblesGroup.selectAll(".event-bubble")
         .transition()
         .duration(100)
@@ -565,6 +690,11 @@ function selectEvent(event) {
     if (viewState.selectedEvent === event) return;
 
     viewState.selectedEvent = event;
+
+    // Update canvas bubble selection
+    if (canvasBubbleRenderer.canvas) {
+        canvasBubbleRenderer.selectBubble(event);
+    }
 
     requestAnimationFrame(() => {
         bubblesGroup.selectAll(".event-bubble")
@@ -786,7 +916,7 @@ function updateCountryPanel() {
 
         const heatmapSvg = heatmapContainer.append("svg")
             .attr("width", "100%")
-            .attr("height", 50);
+            .attr("height", 60);
 
         const cellWidth = Math.max(8, Math.min(15, 280 / years.length));
 
@@ -794,7 +924,7 @@ function updateCountryPanel() {
             const intensity = yearData.get(year) / maxCas;
             heatmapSvg.append("rect")
                 .attr("x", i * (cellWidth + 2))
-                .attr("y", 0)
+                .attr("y", 10)
                 .attr("width", cellWidth)
                 .attr("height", 30)
                 .attr("fill", d3.interpolateReds(intensity))
@@ -802,16 +932,18 @@ function updateCountryPanel() {
                 .append("title").text(`${year}: ${d3.format(",d")(yearData.get(year))} casualties`);
         });
 
-        // Year labels (every 5 years)
-        years.filter((y, i) => i % Math.ceil(years.length / 6) === 0).forEach((year) => {
+        // Year labels (every 3 years)
+        years.filter(y => y % 3 === 0).forEach((year) => {
             const idx = years.indexOf(year);
-            heatmapSvg.append("text")
-                .attr("x", idx * (cellWidth + 2) + cellWidth / 2)
-                .attr("y", 45)
-                .attr("text-anchor", "middle")
-                .style("font-size", "8px")
-                .style("fill", "#64748b")
-                .text(year);
+            if (idx >= 0) {
+                heatmapSvg.append("text")
+                    .attr("x", idx * (cellWidth + 2) + cellWidth / 2)
+                    .attr("y", 55)
+                    .attr("text-anchor", "middle")
+                    .style("font-size", "9px")
+                    .style("fill", "#64748b")
+                    .text(year);
+            }
         });
     }
 
@@ -843,9 +975,7 @@ function updateCountryPanel() {
         const factionsContainer = countryPanel.append("div")
             .style("background", "white")
             .style("border-radius", "6px")
-            .style("padding", "0.75rem")
-            .style("max-height", "200px")
-            .style("overflow-y", "auto");
+            .style("padding", "0.75rem");
 
         connectedFactions.forEach(faction => {
             const isSelected = viewState.selectedFaction === faction.name;
@@ -957,7 +1087,7 @@ function renderActivityHeatmap(container, events, title = "Activity Timeline") {
         .style("border-radius", "6px")
         .style("padding", "0.75rem")
         .style("margin-bottom", "1rem")
-        .style("overflow-x", "auto");
+        .style("overflow", "hidden"); // Changed from overflow-x: auto to hidden for proper fitting
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -978,30 +1108,44 @@ function renderActivityHeatmap(container, events, title = "Activity Timeline") {
     });
     if (maxCellCasualties === 0) maxCellCasualties = 1;
 
+    // Get actual container width
     const containerWidth = heatmapContainer.node()?.getBoundingClientRect().width || 280;
-    const margin = { top: 5, right: 10, bottom: 25, left: 35 };
-    const availableWidth = Math.max(150, containerWidth - margin.left - margin.right - 20);
-    const cellWidth = Math.max(6, Math.min(15, (availableWidth - 20) / Math.max(years.length, 1)));
-    const cellHeight = 10;
+    const containerHeight = 180; // Fixed height for heatmap area
+
+    const margin = { top: 5, right: 5, bottom: 20, left: 30 };
+    const availableWidth = containerWidth - margin.left - margin.right;
+    const availableHeight = containerHeight - margin.top - margin.bottom;
+
+    // Calculate cell sizes to fit within available space
+    const numYears = Math.max(years.length, 1);
     const cellGap = 1;
 
-    const svgWidth = margin.left + years.length * (cellWidth + cellGap) + margin.right;
-    const svgHeight = margin.top + 12 * (cellHeight + cellGap) + margin.bottom;
+    // Calculate cell width and height to fit perfectly
+    const cellWidth = Math.max(3, (availableWidth - (numYears - 1) * cellGap) / numYears);
+    const cellHeight = Math.max(8, (availableHeight - 11 * cellGap) / 12);
+
+    // Calculate actual SVG dimensions based on cells
+    const heatmapWidth = margin.left + numYears * (cellWidth + cellGap) + margin.right;
+    const heatmapHeight = margin.top + 12 * (cellHeight + cellGap) + margin.bottom;
 
     const heatmapSvg = heatmapContainer.append("svg")
-        .attr("width", Math.max(svgWidth, 150))
-        .attr("height", svgHeight);
+        .attr("width", "100%")
+        .attr("height", containerHeight)
+        .attr("viewBox", `0 0 ${heatmapWidth} ${heatmapHeight}`)
+        .attr("preserveAspectRatio", "xMidYMid meet");
 
+    // Month labels (Y-axis)
     monthNames.forEach((month, monthIdx) => {
         heatmapSvg.append("text")
-            .attr("x", margin.left - 5)
+            .attr("x", margin.left - 3)
             .attr("y", margin.top + monthIdx * (cellHeight + cellGap) + cellHeight / 2 + 3)
             .attr("text-anchor", "end")
-            .style("font-size", "7px")
+            .style("font-size", `${Math.max(6, Math.min(9, cellHeight * 0.8))}px`)
             .style("fill", "#64748b")
             .text(month);
     });
 
+    // Draw heatmap cells
     years.forEach((year, yearIdx) => {
         const monthMap = yearMonthData.get(year) || new Map();
 
@@ -1024,14 +1168,17 @@ function renderActivityHeatmap(container, events, title = "Activity Timeline") {
         }
     });
 
-    const yearLabelInterval = Math.max(1, Math.ceil(years.length / 8));
-    years.filter((y, i) => i % yearLabelInterval === 0).forEach((year) => {
+    // Year labels (X-axis) - show enough labels to be readable
+    const maxLabels = Math.floor(availableWidth / 25); // ~25px per label minimum
+    const yearLabelInterval = Math.max(1, Math.ceil(years.length / maxLabels));
+
+    years.filter((y, i) => i % yearLabelInterval === 0 || i === years.length - 1).forEach((year) => {
         const idx = years.indexOf(year);
         heatmapSvg.append("text")
             .attr("x", margin.left + idx * (cellWidth + cellGap) + cellWidth / 2)
             .attr("y", margin.top + 12 * (cellHeight + cellGap) + 12)
             .attr("text-anchor", "middle")
-            .style("font-size", "7px")
+            .style("font-size", `${Math.max(6, Math.min(9, cellWidth * 0.9))}px`)
             .style("fill", "#64748b")
             .text(year);
     });
@@ -1103,11 +1250,7 @@ function renderEventsList(container, events, options = {}) {
 
     const eventsSection = container.append("div")
         .attr("class", "chart-container")
-        .style("margin-top", "1rem")
-        .style("flex", "1")
-        .style("min-height", "0")
-        .style("display", "flex")
-        .style("flex-direction", "column");
+        .style("margin-top", "1rem");
 
     eventsSection.append("h4")
         .style("margin", "0 0 0.5rem 0")
@@ -1116,10 +1259,7 @@ function renderEventsList(container, events, options = {}) {
         .text(title);
 
     const listContainer = eventsSection.append("div")
-        .attr("class", "events-list")
-        .style("flex", "1")
-        .style("overflow-y", "auto")
-        .style("min-height", "0");
+        .attr("class", "events-list");
 
     const sortedEvents = [...events].sort((a, b) => b.best - a.best).slice(0, limit);
 
@@ -1883,12 +2023,19 @@ function renderTopCountriesList() {
 // UI SETUP (From global.js)
 // ============================================================================
 
+// Track if time slider has been initialized to prevent duplicate listeners
+let timeSliderInitialized = false;
+
 function createTimeSlider() {
     const slider = document.getElementById('year-slider');
-    if (!slider) return;
+    if (!slider || timeSliderInitialized) return;
+
+    timeSliderInitialized = true;
+    console.log('[DEBUG] Time slider initialized');
 
     slider.addEventListener('input', function () {
         const year = +this.value;
+        console.log('[DEBUG] Slider input event fired - year:', year, 'mode:', viewState.mode);
         document.getElementById('year-current').textContent = year;
         updateMapForYear();
     });
@@ -1897,11 +2044,13 @@ function createTimeSlider() {
     const playBtn = document.getElementById('play-btn');
     if (playBtn) {
         let playing = false;
-        let interval;
+        let interval = null;
 
         playBtn.addEventListener('click', function () {
+            console.log('[DEBUG] Play button clicked - playing:', playing, 'mode:', viewState.mode);
             if (playing) {
                 clearInterval(interval);
+                interval = null;
                 this.textContent = '▶ Play';
                 playing = false;
             } else {
@@ -1911,6 +2060,7 @@ function createTimeSlider() {
                 interval = setInterval(() => {
                     const currentVal = +slider.value;
                     const maxVal = +slider.max;
+                    console.log('[DEBUG] Play interval tick - year:', currentVal, 'mode:', viewState.mode);
 
                     if (currentVal >= maxVal) {
                         slider.value = slider.min;
@@ -1927,11 +2077,13 @@ function createTimeSlider() {
 }
 
 function updateMapForYear() {
+    console.log('[DEBUG] updateMapForYear called, mode:', viewState.mode);
     updateStats();
     if (viewState.mode === 'world') {
         drawConflictBubbles();
         renderTopCountriesList();
     } else if (viewState.mode === 'country') {
+        console.log('[DEBUG] Calling drawEventBubbles for country mode');
         drawEventBubbles();
         updateCountryPanel();
         updateAllCharts();

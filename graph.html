@@ -176,21 +176,15 @@
         <div class="panel-reveal-trigger right" id="right-reveal-trigger"></div>
     </div>
 
-    <!-- Load shared utilities first -->
-    <script src="js/ui/shared.js"></script>
-    <!-- Load core data modules -->
-    <script src="js/core/viewStateManager.js"></script>
-    <script src="js/core/dataFilterManager.js"></script>
-    <script src="js/core/aggregationManager.js"></script>
-    <script src="js/core/DataManager.js"></script>
-    <!-- Load rendering modules -->
-    <script src="js/rendering/renderingEngine.js"></script>
-    <script src="js/rendering/cleanupManager.js"></script>
-    <script src="js/rendering/LayerManager.js"></script>
-    <script src="js/rendering/GraphOptimizer.js"></script>
-    <!-- Load UI modules -->
-    <script src="js/ui/ChartRenderer.js"></script>
-    <script src="js/ui/FilterPanel.js"></script>
+    <!-- Load shared modules in correct order -->
+    <script src="js/shared/constants.js"></script>
+    <script src="js/shared/utils.js"></script>
+    <script src="js/shared/stateManager.js"></script>
+    <script src="js/shared/dataLoader.js"></script>
+    <script src="js/shared/mapRenderer.js"></script>
+    <script src="js/shared/chartRenderer.js"></script>
+    <script src="js/shared/panelBuilder.js"></script>
+    <script src="js/shared/canvasBubbleRenderer.js"></script>
     <!-- Load Graph View script -->
     <script src="graph.js"></script>
 
