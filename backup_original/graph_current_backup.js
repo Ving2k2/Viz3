@@ -411,6 +411,7 @@ function drawConflictBubbles() {
         .attr("cy", d => projection(d.coordinates)[1])
         .attr("r", 0)
         .style("fill", d => REGION_COLORS[d.region])
+        .style("stroke", "none")
         .style("cursor", "pointer")
         .style("opacity", 0)
         .on("click", handleBubbleClick);
@@ -570,6 +571,7 @@ function drawIndividualEventBubbles() {
         .attr("cy", d => projection([d.longitude, d.latitude])[1])
         .attr("r", d => radiusScale(d.best))
         .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
+        .style("stroke", "none")
         .style("cursor", "pointer")
         .classed("selected-event", d => viewState.selectedEvent && d === viewState.selectedEvent)
         .classed("unselected-event", d => viewState.selectedEvent && d !== viewState.selectedEvent)
@@ -605,9 +607,38 @@ function selectEvent(event) {
     }
     lastEventSelectTime = now;
 
+    // Check if we are in Faction View (Multi-Country Level) and need to drill down first
+    if (viewState.mode === 'faction' && viewState.factionViewLevel === 'world' && event.country) {
+        // We are in faction world view (aggregated country bubbles), but want to select a specific event.
+        // We must first enter the country level view for this event's country.
+        enterFactionCountryLevel(event.country);
+
+        // After entering country level, we need to wait for the bubbles to be drawn before we can highlighted them.
+        // Since drawFactionBubbles (called by enterFactionCountryLevel) is synchronous (transition is async but elements exist),
+        // we can proceed. However, a small delay allows the transition to start.
+        // We'll wrap the rest in a slightly delayed requestAnimationFrame or timeout to ensure safe execution
+        // AND to allow the "zoom to country" to register before we "zoom to event".
+        // Actually, "Zoom to event" is requested.
+
+        // Let's defer the actual selection highlighting and event-zooming slightly.
+        setTimeout(() => {
+            highlightAndZoomToEvent(event);
+        }, 100);
+
+        return;
+    }
+
+    highlightAndZoomToEvent(event);
+}
+
+function highlightAndZoomToEvent(event) {
     // Early exit if same event is already selected
     if (viewState.selectedEvent === event) {
-        return;
+        // Even if already selected, we might want to re-zoom if the map moved? 
+        // For now, keep existing optimization but ensure zoom logic runs if needed.
+        // Actually, if user clicks it again in the list, they might expect a re-zoom.
+        // Let's allow re-zooming.
+        // return; 
     }
 
     viewState.selectedEvent = event;
@@ -622,13 +653,43 @@ function selectEvent(event) {
             .classed("unselected-event", false);
 
         // Add selection class only to selected bubble
-        bubbles.filter(d => d === event)
+        bubbles.filter(d => d.id === event.id || (d.year === event.year && d.latitude === event.latitude && d.longitude === event.longitude)) // robust matching
             .classed("selected-event", true);
 
         // Batch update non-selected bubbles - make them gray
-        bubbles.filter(d => d !== event)
+        bubbles.filter(d => !(d.id === event.id || (d.year === event.year && d.latitude === event.latitude && d.longitude === event.longitude)))
             .classed("unselected-event", true);
     });
+
+    // ZOOM TO EVENT: If in faction map view (map is visible), zoom to event position
+    const worldMap = document.getElementById('world-map');
+    const isMapVisible = worldMap && worldMap.style.display !== 'none';
+
+    if (isMapVisible && event.latitude && event.longitude && projection) {
+        requestAnimationFrame(() => {
+            // Calculate projected position
+            const coords = projection([event.longitude, event.latitude]);
+            if (coords) {
+                const svg = d3.select("#world-map");
+                const mapWidth = parseInt(svg.attr("width")) || 800;
+                const mapHeight = parseInt(svg.attr("height")) || 600;
+
+                // Zoom to event location with smooth transition
+                const scale = 4; // Zoom level
+                const x = mapWidth / 2 - coords[0] * scale;
+                const y = mapHeight / 2 - coords[1] * scale;
+
+                // Apply zoom transformation
+                mapGroup.transition()
+                    .duration(1500) // Slower, smoother zoom for the "fly to" effect
+                    .attr("transform", `translate(${x}, ${y}) scale(${scale})`);
+
+                // Update current zoom state
+                currentZoom = d3.zoomIdentity.translate(x, y).scale(scale);
+                svg.call(zoom.transform, currentZoom);
+            }
+        });
+    }
 
     // OPTIMIZED: Defer heavy chart rendering to next frame
     requestAnimationFrame(() => {
@@ -664,7 +725,7 @@ function hideEventTooltip() {
     d3.selectAll(".event-tooltip").remove();
 }
 
-// OPTIMIZED: Render event details in right panel - UNIFIED with global.js
+// OPTIMIZED: Render event details in right panel
 function renderEventDetailsView(event) {
     if (!event) return;
 
@@ -677,7 +738,7 @@ function renderEventDetailsView(event) {
 
     // Update panel title
     d3.select("#charts-title").text("Event Details");
-    d3.select("#charts-subtitle").text(event.country || "Conflict Event");
+    d3.select("#charts-subtitle").text(event.dyad_name || "Conflict Event");
 
     // Hide standard chart containers
     chartsPanel.selectAll(".chart-container").style("display", "none");
@@ -693,147 +754,126 @@ function renderEventDetailsView(event) {
         detailsContainer.html('').style("display", "block");
     }
 
-    // Get factions involved in this event (connected factions)
-    const connectedFactions = [];
-    if (event.side_a) {
-        connectedFactions.push({
-            name: event.side_a,
-            casualties: event.deaths_a || 0,
-            relationshipType: 'opponent',
-            color: '#ef4444'
-        });
-    }
-    if (event.side_b) {
-        connectedFactions.push({
-            name: event.side_b,
-            casualties: event.deaths_b || 0,
-            relationshipType: 'opponent',
-            color: '#3b82f6'
-        });
-    }
+    // Build HTML matching global.js format exactly (no emojis, clean design)
+    const detailsHTML = `
+        <div style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 2px solid rgba(0, 0, 0, 0.05);">
+            <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+                ${event.date_start || event.year} • ${event.type_of_violence_name}
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; line-height: 1.3;">
+                ${event.dyad_name || 'Unknown Conflict Event'}
+            </div>
+            ${event.where_description ? `
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                <strong>Location:</strong> ${event.where_description}
+            </div>
+            ` : `
+            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.5rem;">
+                <strong>Location:</strong> ${event.country}, ${event.region}
+            </div>
+            `}
+        </div>
+        
+        <div style="margin-bottom: 1.5rem;">
+            <div style="padding: 1rem; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); border-radius: 8px; border-left: 4px solid #ef4444; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div style="font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem;">
+                    Total Casualties
+                </div>
+                <div style="font-size: 2rem; font-weight: 700; color: #ef4444; line-height: 1;">
+                    ${d3.format(",d")(event.best)}
+                </div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
+                    Best Estimate
+                </div>
+            </div>
+        </div>
+        
+        <div style="padding: 1.25rem; background: rgba(0, 0, 0, 0.02); border-radius: 8px; margin-bottom: 1rem; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 1rem;">
+                Casualties Breakdown by Group
+            </h4>
+            
+            <!-- Visual Bar Chart -->
+            <div id="casualties-bar-chart" style="margin-bottom: 1rem; height: 30px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: flex;">
+                ${event.deaths_a > 0 ? `
+                <div style="height: 100%; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: ${(event.deaths_a / event.best * 100)}%;" title="Side A: ${d3.format(",d")(event.deaths_a)} (${d3.format(".1%")(event.deaths_a / event.best)})">
+                </div>
+                ` : ''}
+                ${event.deaths_b > 0 ? `
+                <div style="height: 100%; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); width: ${(event.deaths_b / event.best * 100)}%;" title="Side B: ${d3.format(",d")(event.deaths_b)} (${d3.format(".1%")(event.deaths_b / event.best)})">
+                </div>
+                ` : ''}
+                ${event.deaths_civilians > 0 ? `
+                <div style="height: 100%; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
+                </div>
+                ` : ''}
+                ${event.deaths_unknown > 0 ? `
+                <div style="height: 100%; background: linear-gradient(135deg, #57534e 0%, #78716c 100%); width: ${(event.deaths_unknown / event.best * 100)}%;" title="Unknown: ${d3.format(",d")(event.deaths_unknown)} (${d3.format(".1%")(event.deaths_unknown / event.best)})">
+                </div>
+                ` : ''}
+            </div>
+            
+            <!-- Detailed Breakdown List -->
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                ${event.deaths_a > 0 ? `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #ef4444;">
+                    <span style="font-size: 0.8rem; color: #475569;">Side A: ${event.side_a || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #ef4444;">${d3.format(",d")(event.deaths_a)}</span>
+                </div>
+                ` : ''}
+                ${event.deaths_b > 0 ? `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #3b82f6;">
+                    <span style="font-size: 0.8rem; color: #475569;">Side B: ${event.side_b || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #3b82f6;">${d3.format(",d")(event.deaths_b)}</span>
+                </div>
+                ` : ''}
+                ${event.deaths_civilians > 0 ? `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #22c55e;">
+                    <span style="font-size: 0.8rem; color: #475569;">Civilians</span>
+                    <span style="font-weight: 600; color: #16a34a;">${d3.format(",d")(event.deaths_civilians)}</span>
+                </div>
+                ` : ''}
+                ${event.deaths_unknown > 0 ? `
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #78716c;">
+                    <span style="font-size: 0.8rem; color: #475569;">Unknown</span>
+                    <span style="font-weight: 600; color: #78716c;">${d3.format(",d")(event.deaths_unknown)}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <!-- Factions Involved -->
+        <div style="padding: 1rem; background: white; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+                Factions Involved
+            </h4>
+            ${event.side_a ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 4px; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_a}</span>
+                <span style="font-size: 0.75rem; color: #ef4444;">Side A</span>
+            </div>
+            ` : ''}
+            ${event.side_b ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(59, 130, 246, 0.05); border-radius: 4px;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_b}</span>
+                <span style="font-size: 0.75rem; color: #3b82f6;">Side B</span>
+            </div>
+            ` : ''}
+        </div>
+        
+        ${event.source_headline || event.source_article ? `
+        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-top: 1rem; border: 1px solid rgba(59, 130, 246, 0.1);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+                Source Information
+            </h4>
+            ${event.source_headline ? `<p style="font-size: 0.85rem; color: #475569; margin-bottom: 0.5rem; font-style: italic; line-height: 1.5;">"${event.source_headline}"</p>` : ''}
+            ${event.source_article ? `<p style="font-size: 0.75rem; color: #94a3b8; line-height: 1.4;">${event.source_article}</p>` : ''}
+        </div>
+        ` : ''}
+    `;
 
-    // Get all events in same country for context
-    const countryEvents = viewState.selectedCountryData?.eventsWithCoords ||
-        rawData.filter(e => e.country === event.country);
-
-    // Use shared renderEntityInfoPanel for unified UI
-    renderEntityInfoPanel(detailsContainer, {
-        title: "Event Details",
-        entityName: event.dyad_name || 'Unknown Conflict',
-        entitySubtext: `${event.date_start || event.year} • ${event.type_of_violence_name}`,
-        entityColor: TYPE_COLORS[event.type_of_violence_name] || '#64748b',
-        events: [event], // Single event for stats
-        country: event.country,
-        region: event.region,
-        connectedEntities: connectedFactions,
-        connectedTitle: "Factions Involved",
-        showHeatmap: false, // Single event, no heatmap needed
-        showViolenceBreakdown: false // Already showing violence type
-    });
-
-    // Add casualties breakdown section (unique to event view)
-    const panel = detailsContainer.select("div");
-
-    // Casualties breakdown card
-    if (event.best > 0) {
-        panel.append("h4")
-            .style("margin", "1rem 0 0.5rem 0")
-            .style("font-size", "0.9rem")
-            .style("color", "#475569")
-            .text("Casualties Breakdown");
-
-        const breakdownContainer = panel.append("div")
-            .style("background", "white")
-            .style("border-radius", "6px")
-            .style("padding", "0.75rem")
-            .style("margin-bottom", "1rem");
-
-        // Visual bar chart
-        const barChart = breakdownContainer.append("div")
-            .style("height", "24px")
-            .style("background", "#e2e8f0")
-            .style("border-radius", "4px")
-            .style("overflow", "hidden")
-            .style("display", "flex")
-            .style("margin-bottom", "0.75rem");
-
-        const casualties = [
-            { label: `Side A: ${event.side_a || 'Unknown'}`, value: event.deaths_a || 0, color: '#ef4444' },
-            { label: `Side B: ${event.side_b || 'Unknown'}`, value: event.deaths_b || 0, color: '#3b82f6' },
-            { label: 'Civilians', value: event.deaths_civilians || 0, color: '#dc2626' },
-            { label: 'Unknown', value: event.deaths_unknown || 0, color: '#78716c' }
-        ].filter(c => c.value > 0);
-
-        casualties.forEach(c => {
-            const pct = (c.value / event.best) * 100;
-            barChart.append("div")
-                .style("width", `${pct}%`)
-                .style("height", "100%")
-                .style("background", c.color)
-                .attr("title", `${c.label}: ${d3.format(",d")(c.value)} (${d3.format(".1%")(c.value / event.best)})`);
-        });
-
-        // Detailed breakdown list
-        casualties.forEach(c => {
-            const pct = (c.value / event.best) * 100;
-            const row = breakdownContainer.append("div")
-                .style("display", "flex")
-                .style("justify-content", "space-between")
-                .style("align-items", "center")
-                .style("padding", "0.4rem 0")
-                .style("border-bottom", "1px solid #f1f5f9");
-
-            row.append("div")
-                .style("display", "flex")
-                .style("align-items", "center")
-                .style("gap", "0.5rem")
-                .html(`
-                    <div style="width: 10px; height: 10px; background: ${c.color}; border-radius: 2px;"></div>
-                    <span style="font-size: 0.8rem; color: #475569;">${c.label}</span>
-                `);
-
-            row.append("div")
-                .style("text-align", "right")
-                .html(`
-                    <span style="font-weight: 600; color: #1e293b; font-size: 0.85rem;">${d3.format(",d")(c.value)}</span>
-                    <span style="font-size: 0.7rem; color: #94a3b8; margin-left: 0.25rem;">(${d3.format(".0%")(pct / 100)})</span>
-                `);
-        });
-    }
-
-    // Source information
-    if (event.source_headline || event.source_article) {
-        panel.append("h4")
-            .style("margin", "1rem 0 0.5rem 0")
-            .style("font-size", "0.9rem")
-            .style("color", "#475569")
-            .text("Source Information");
-
-        const sourceContainer = panel.append("div")
-            .style("background", "rgba(59, 130, 246, 0.05)")
-            .style("border-radius", "6px")
-            .style("padding", "0.75rem")
-            .style("border", "1px solid rgba(59, 130, 246, 0.1)");
-
-        if (event.source_headline) {
-            sourceContainer.append("p")
-                .style("font-size", "0.85rem")
-                .style("color", "#475569")
-                .style("font-style", "italic")
-                .style("margin-bottom", "0.5rem")
-                .text(`"${event.source_headline}"`);
-        }
-
-        if (event.source_article) {
-            sourceContainer.append("p")
-                .style("font-size", "0.75rem")
-                .style("color", "#94a3b8")
-                .style("line-height", "1.4")
-                .text(event.source_article);
-        }
-    }
+    detailsContainer.html(detailsHTML);
 }
-
 
 // ============================================================================
 // COUNTRY INTERACTIONS
@@ -862,152 +902,9 @@ function findCountryFeature(countryName) {
     if (countryFeature) return countryFeature;
 
     // 3. Check manual mapping FIRST (before fuzzy matching)
-    const manualMapping = {
-        // === HISTORICAL/POLITICAL NAME CHANGES ===
-        "Cambodia (Kampuchea)": "Cambodia",
-        "Kampuchea": "Cambodia",
-
-        // Congo variations - MUST come before fuzzy matching
-        "DR Congo (Zaire)": "Dem. Rep. Congo",
-        "DR Congo": "Dem. Rep. Congo",
-        "Democratic Republic of the Congo": "Dem. Rep. Congo",
-        "Congo, DR": "Dem. Rep. Congo",
-        "Zaire": "Dem. Rep. Congo",
-        "Congo": "Congo",
-        "Republic of the Congo": "Congo",
-
-        // Myanmar
-        "Myanmar (Burma)": "Myanmar",
-        "Burma": "Myanmar",
-
-        // Zimbabwe
-        "Zimbabwe (Rhodesia)": "Zimbabwe",
-        "Rhodesia": "Zimbabwe",
-
-        // Yemen
-        "Yemen (North Yemen)": "Yemen",
-        "North Yemen": "Yemen",
-        "South Yemen": "Yemen",
-
-        // Russia/Soviet Union
-        "Russia (Soviet Union)": "Russia",
-        "Soviet Union": "Russia",
-        "USSR": "Russia",
-
-        // === YUGOSLAVIA SUCCESSOR STATES ===
-        "Serbia (Yugoslavia)": "Serbia",
-        "Yugoslavia": "Serbia",
-        "Serbia and Montenegro": "Serbia",
-        "Federal Republic of Yugoslavia": "Serbia",
-
-        "Bosnia-Herzegovina": "Bosnia and Herz.",
-        "Bosnia and Herzegovina": "Bosnia and Herz.",
-        "Bosnia": "Bosnia and Herz.",
-
-        "Montenegro": "Montenegro",
-
-        "Macedonia": "North Macedonia",
-        "FYROM": "North Macedonia",
-        "Former Yugoslav Republic of Macedonia": "North Macedonia",
-
-        "Croatia": "Croatia",
-        "Slovenia": "Slovenia",
-
-        // === ASIAN COUNTRIES ===
-        "Laos": "Lao PDR",
-        "Vietnam": "Vietnam",
-        "Viet Nam": "Vietnam",
-
-        "Timor-Leste (East Timor)": "Timor-Leste",
-        "East Timor": "Timor-Leste",
-
-        "North Korea": "Dem. Rep. Korea",
-        "South Korea": "Korea",
-        "Republic of Korea": "Korea",
-
-        // === AFRICAN COUNTRIES ===
-        "Libya": "Libya",
-        "Egypt": "Egypt",
-        "Tunisia": "Tunisia",
-        "Algeria": "Algeria",
-        "Morocco": "Morocco",
-
-        "Mauritania": "Mauritania",
-        "Senegal": "Senegal",
-        "Gambia": "Gambia",
-        "Guinea-Bissau": "Guinea-Bissau",
-        "Guinea": "Guinea",
-        "Sierra Leone": "Sierra Leone",
-        "Liberia": "Liberia",
-        "Ivory Coast": "Côte d'Ivoire",
-        "Equatorial Guinea": "Eq. Guinea",
-        "Gabon": "Gabon",
-
-        "Sudan": "Sudan",
-        "South Sudan": "S. Sudan",
-        "Eritrea": "Eritrea",
-        "Ethiopia": "Ethiopia",
-        "Djibouti": "Djibouti",
-        "Somalia": "Somalia",
-        "Kenya": "Kenya",
-        "Uganda": "Uganda",
-        "Rwanda": "Rwanda",
-        "Burundi": "Burundi",
-        "Tanzania": "Tanzania",
-
-        "Angola": "Angola",
-        "Zambia": "Zambia",
-        "Malawi": "Malawi",
-        "Mozambique": "Mozambique",
-        "Zimbabwe": "Zimbabwe",
-        "Botswana": "Botswana",
-        "Namibia": "Namibia",
-        "South Africa": "South Africa",
-        "Lesotho": "Lesotho",
-        "Eswatini": "eSwatini",
-        "Swaziland": "eSwatini",
-        "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-        // === EUROPEAN COUNTRIES ===
-        "Czech Republic": "Czechia",
-        "Czechia": "Czechia",
-
-        "Belarus": "Belarus",
-        "Byelarus": "Belarus",
-        "Belorussia": "Belarus",
-
-        "Moldova": "Moldova",
-        "Moldavia": "Moldova",
-
-        // === AMERICAS ===
-        "United States": "United States of America",
-        "USA": "United States of America",
-        "US": "United States of America",
-        "U.S.A.": "United States of America",
-
-        "Dominican Republic": "Dominican Rep.",
-
-        // === MIDDLE EAST ===
-        "Palestine": "Palestine",
-        "West Bank": "Palestine",
-        "Gaza": "Palestine",
-
-        // === ADDITIONAL MAPPINGS ===
-        "United Kingdom": "United Kingdom",
-        "UK": "United Kingdom",
-        "Great Britain": "United Kingdom",
-
-        "Bahrain": "Bahrain",
-        "Comoros": "Comoros",
-        "Madagascar": "Madagascar",
-        "Madagascar (Malagasy)": "Madagascar",
-        "Malagasy": "Madagascar",
-        "North Macedonia": "North Macedonia",
-        "Solomon Islands": "Solomon Is."
-    };
-
-    if (manualMapping[countryName]) {
-        countryFeature = allCountryFeatures.find(c => c.properties.name === manualMapping[countryName]);
+    // Use shared COUNTRY_NAME_MAPPING
+    if (COUNTRY_NAME_MAPPING[countryName]) {
+        countryFeature = allCountryFeatures.find(c => c.properties.name === COUNTRY_NAME_MAPPING[countryName]);
         if (countryFeature) return countryFeature;
     }
 
@@ -1036,29 +933,15 @@ function handleCountryClick(event, d) {
     const mapCountryName = d.properties.name;
 
     // Reverse manual mapping: map feature name -> CSV country name
-    const reverseMapping = {
-        "Dem. Rep. Congo": "DR Congo (Zaire)",
-        "Congo": "Congo",
-        "S. Sudan": "South Sudan",
-        "Central African Rep.": "Central African Republic",
-        "Eq. Guinea": "Equatorial Guinea",
-        "eSwatini": "Kingdom of eSwatini (Swaziland)",
-        "Côte d'Ivoire": "Ivory Coast",
-        "Lao PDR": "Laos",
-        "Timor-Leste": "Timor-Leste (East Timor)",
-        "Dem. Rep. Korea": "North Korea",
-        "Korea": "South Korea",
-        "Bosnia and Herz.": "Bosnia-Herzegovina",
-        "North Macedonia": "Macedonia",
-        "Czechia": "Czech Republic",
-        "United States of America": "United States",
-        "Dominican Rep.": "Dominican Republic",
-        "Solomon Is.": "Solomon Islands",
-        "Myanmar": "Myanmar (Burma)"
-    };
+    // Reverse manual mapping: map feature name -> CSV country name
+    // Use shared COUNTRY_NAME_MAPPING
+    let csvCountryName = mapCountryName;
 
-    // Try to find the CSV name using reverse mapping
-    const csvCountryName = reverseMapping[mapCountryName] || mapCountryName;
+    // Find key in COUNTRY_NAME_MAPPING where value === mapCountryName
+    const mappingEntry = Object.entries(COUNTRY_NAME_MAPPING).find(([key, value]) => value === mapCountryName);
+    if (mappingEntry) {
+        csvCountryName = mappingEntry[0];
+    }
 
     // Try exact match with CSV name
     let countryConflictData = processedData.find(c => c.name === csvCountryName);
@@ -1125,217 +1008,12 @@ function handleBubbleClick(event, d) {
 
     // 3. Check manual mapping FIRST (before fuzzy matching)
     // This prevents "DR Congo (Zaire)" from matching "Congo" in fuzzy search
+    // 3. Check manual mapping FIRST (before fuzzy matching)
+    // Use shared COUNTRY_NAME_MAPPING
     if (!countryFeature) {
-        const manualMapping = {
-            // === HISTORICAL/POLITICAL NAME CHANGES ===
-
-            // Cambodia
-            "Cambodia (Kampuchea)": "Cambodia",
-            "Kampuchea": "Cambodia",
-
-            // Congo variations - MUST come before fuzzy matching
-            "DR Congo (Zaire)": "Dem. Rep. Congo",
-            "DR Congo": "Dem. Rep. Congo",
-            "Democratic Republic of the Congo": "Dem. Rep. Congo",
-            "Congo, DR": "Dem. Rep. Congo",
-            "Zaire": "Dem. Rep. Congo",
-            "Congo": "Congo",  // Republic of Congo
-            "Republic of the Congo": "Congo",
-
-            // Myanmar
-            "Myanmar (Burma)": "Myanmar",
-            "Burma": "Myanmar",
-
-            // Zimbabwe
-            "Zimbabwe (Rhodesia)": "Zimbabwe",
-            "Rhodesia": "Zimbabwe",
-
-            // Yemen
-            "Yemen (North Yemen)": "Yemen",
-            "North Yemen": "Yemen",
-            "South Yemen": "Yemen",
-
-            // Russia/Soviet Union
-            "Russia (Soviet Union)": "Russia",
-            "Soviet Union": "Russia",
-            "USSR": "Russia",
-
-            // === YUGOSLAVIA SUCCESSOR STATES ===
-
-            // Serbia
-            "Serbia (Yugoslavia)": "Serbia",
-            "Yugoslavia": "Serbia",
-            "Serbia and Montenegro": "Serbia",
-            "Federal Republic of Yugoslavia": "Serbia",
-
-            // Bosnia
-            "Bosnia-Herzegovina": "Bosnia and Herz.",
-            "Bosnia and Herzegovina": "Bosnia and Herz.",
-            "Bosnia": "Bosnia and Herz.",
-
-            // Montenegro
-            "Montenegro": "Montenegro",
-
-            // Macedonia
-            "Macedonia": "North Macedonia",
-            "FYROM": "North Macedonia",
-            "Former Yugoslav Republic of Macedonia": "North Macedonia",
-
-            // Croatia
-            "Croatia": "Croatia",
-
-            // Slovenia
-            "Slovenia": "Slovenia",
-
-            // === ASIAN COUNTRIES ===
-
-            // Laos
-            "Laos": "Lao PDR",
-
-            // Vietnam
-            "Vietnam": "Vietnam",
-            "Viet Nam": "Vietnam",
-
-            // Timor
-            "Timor-Leste (East Timor)": "Timor-Leste",
-            "East Timor": "Timor-Leste",
-
-            // Korea
-            "North Korea": "Dem. Rep. Korea",
-            "South Korea": "Korea",
-            "Republic of Korea": "Korea",
-
-            // === AFRICAN COUNTRIES ===
-
-            // North Africa
-            "Libya": "Libya",
-            "Egypt": "Egypt",
-            "Tunisia": "Tunisia",
-            "Algeria": "Algeria",
-            "Morocco": "Morocco",
-
-            // West Africa
-            "Mauritania": "Mauritania",
-            "Senegal": "Senegal",
-            "Gambia": "Gambia",
-            "Guinea-Bissau": "Guinea-Bissau",
-            "Guinea": "Guinea",
-            "Sierra Leone": "Sierra Leone",
-            "Liberia": "Liberia",
-            "Ivory Coast": "Côte d'Ivoire",
-            "Mali": "Mali",
-            "Burkina Faso": "Burkina Faso",
-            "Ghana": "Ghana",
-            "Togo": "Togo",
-            "Benin": "Benin",
-            "Niger": "Niger",
-            "Nigeria": "Nigeria",
-
-            // Central Africa
-            "Chad": "Chad",
-            "Cameroon": "Cameroon",
-            "Central African Republic": "Central African Rep.",
-            "Equatorial Guinea": "Eq. Guinea",
-            "Gabon": "Gabon",
-            "Congo": "Congo",
-            "Republic of the Congo": "Congo",
-            "DR Congo (Zaire)": "Dem. Rep. Congo",
-            "DR Congo": "Dem. Rep. Congo",
-            "Democratic Republic of the Congo": "Dem. Rep. Congo",
-
-            // East Africa
-            "Sudan": "Sudan",
-            "South Sudan": "S. Sudan",
-            "Eritrea": "Eritrea",
-            "Ethiopia": "Ethiopia",
-            "Djibouti": "Djibouti",
-            "Somalia": "Somalia",
-            "Kenya": "Kenya",
-            "Uganda": "Uganda",
-            "Rwanda": "Rwanda",
-            "Burundi": "Burundi",
-            "Tanzania": "Tanzania",
-
-            // Southern Africa
-            "Angola": "Angola",
-            "Zambia": "Zambia",
-            "Malawi": "Malawi",
-            "Mozambique": "Mozambique",
-            "Zimbabwe": "Zimbabwe",
-            "Botswana": "Botswana",
-            "Namibia": "Namibia",
-            "South Africa": "South Africa",
-            "Lesotho": "Lesotho",
-            "Eswatini": "eSwatini",
-            "Swaziland": "eSwatini",
-            "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-            // === EUROPEAN COUNTRIES ===
-
-            // Czech Republic
-            "Czech Republic": "Czechia",
-            "Czechia": "Czechia",
-
-            // Belarus
-            "Belarus": "Belarus",
-            "Byelarus": "Belarus",
-            "Belorussia": "Belarus",
-
-            // Moldova
-            "Moldova": "Moldova",
-            "Moldavia": "Moldova",
-
-            // === AMERICAS ===
-
-            // United States
-            "United States": "United States of America",
-            "USA": "United States of America",
-            "US": "United States of America",
-            "U.S.A.": "United States of America",
-
-            // Dominican Republic
-            "Dominican Republic": "Dominican Rep.",
-
-            // === MIDDLE EAST ===
-
-            // Palestine
-            "Palestine": "Palestine",
-            "West Bank": "Palestine",
-            "Gaza": "Palestine",
-
-            // === ADDITIONAL MAPPINGS ===
-
-            // United Kingdom
-            "United Kingdom": "United Kingdom",
-            "UK": "United Kingdom",
-            "Great Britain": "United Kingdom",
-
-            // === MISSING COUNTRIES FIX ===
-
-            // Bahrain
-            "Bahrain": "Bahrain",
-
-            // Comoros
-            "Comoros": "Comoros",
-
-            // Kingdom of eSwatini
-            "Kingdom of eSwatini (Swaziland)": "eSwatini",
-
-            // Madagascar
-            "Madagascar": "Madagascar",
-            "Madagascar (Malagasy)": "Madagascar",
-            "Malagasy": "Madagascar",
-
-            // North Macedonia (explicit)
-            "North Macedonia": "North Macedonia",
-
-            // Solomon Islands
-            "Solomon Islands": "Solomon Is."
-        };
-
-        const allCountryFeatures = mapGroup.selectAll(".country").data();
-        if (manualMapping[countryName]) {
-            countryFeature = allCountryFeatures.find(c => c.properties.name === manualMapping[countryName]);
+        if (COUNTRY_NAME_MAPPING[countryName]) {
+            const allCountryFeatures = mapGroup.selectAll(".country").data();
+            countryFeature = allCountryFeatures.find(c => c.properties.name === COUNTRY_NAME_MAPPING[countryName]);
         }
     }
 
@@ -1559,6 +1237,7 @@ function drawFactionBubbles(events) {
                 .attr("cy", d => projection([d.longitude, d.latitude])[1])
                 .attr("r", 0)
                 .style("fill", d => TYPE_COLORS[d.type_of_violence_name])
+                .style("stroke", "none")  // No border ring
                 .style("opacity", 0)
                 .style("cursor", "pointer")
                 .on("click", (event, d) => {
@@ -1625,6 +1304,7 @@ function drawFactionCountryBubbles(events, countries) {
         .attr("cy", d => projection(d.coordinates)[1])
         .attr("r", 0)
         .style("fill", d => REGION_COLORS[d.region])
+        .style("stroke", "none")  // No border ring
         .style("cursor", "pointer")
         .style("opacity", 0)
         .on("click", (event, d) => handleFactionCountryClick(event, d));
@@ -1638,18 +1318,14 @@ function drawFactionCountryBubbles(events, countries) {
         .attr("r", d => radiusScale(d.casualties));
 }
 
-// Handle click on country bubble in faction view - zoom to that country and show events
-function handleFactionCountryClick(event, d) {
-    event.stopPropagation();
-
-
-
+// Helper to enter country level within faction view
+function enterFactionCountryLevel(countryName) {
     // Set selected country in faction
-    viewState.selectedCountryInFaction = d.country;
+    viewState.selectedCountryInFaction = countryName;
     viewState.factionViewLevel = 'country';
 
     // Find country feature and zoom
-    const countryFeature = findCountryFeature(d.country);
+    const countryFeature = findCountryFeature(countryName);
     if (countryFeature) {
         zoomToCountry(countryFeature);
     }
@@ -1658,8 +1334,14 @@ function handleFactionCountryClick(event, d) {
     bubblesGroup.selectAll(".faction-country-bubble").remove();
 
     // Filter events to this country only
-    const countryEvents = viewState.selectedFactionData.filter(e => e.country === d.country);
+    const countryEvents = viewState.selectedFactionData.filter(e => e.country === countryName);
     drawFactionBubbles(countryEvents);
+}
+
+// Handle click on country bubble in faction view - zoom to that country and show events
+function handleFactionCountryClick(event, d) {
+    event.stopPropagation();
+    enterFactionCountryLevel(d.country);
 }
 
 // Update country bubble sizes when time slider changes (like updateWorldBubbles)
@@ -1987,14 +1669,246 @@ function enterFactionDetailView(factionId, factionNodeData) {
 }
 
 // ============================================================================
-// NOTE: Chart rendering functions have been unified
+// FACTION CHART RENDERING
 // ============================================================================
-// The updateAllCharts, renderFactionTimelineChart, renderFactionViolenceTypeChart,
-// renderFactionVictimChart, and renderFactionTopEvents functions have been unified
-// and are now handled by the updateDashboardUI function in shared.js.
-// The main updateAllCharts function is defined later in this file (around line 2577)
-// which routes to the appropriate rendering based on viewState.mode.
 
+/**
+ * Update all charts for faction view with comprehensive visualizations
+ * UNIFIED: Uses ChartRenderer for consistent UI across all views
+ */
+function updateFactionCharts() {
+    const events = viewState.selectedFactionData || [];
+
+    if (events.length === 0) {
+        console.warn("No faction events data available for charts");
+        return;
+    }
+
+    // Aggregate data for charts using DataManager
+    const chartData = dataManager.aggregateDataForCharts(events);
+
+    // Use ChartRenderer for all charts - SAME as Country View!
+    ChartRenderer.drawTimelineChart(chartData.byYear, '#chart-timeline');
+    ChartRenderer.drawViolenceTypeChart(chartData.byViolenceType, '#chart-violence-type');
+    ChartRenderer.drawYearMonthHeatmap(chartData.byMonth, '#chart-victims');
+    ChartRenderer.renderTopEventsList(chartData.topEvents, '#chart-top-events', {
+        onEventClick: (event) => selectEvent(event)
+    });
+}
+
+/**
+ * Render timeline chart showing casualties over time
+ */
+function renderFactionTimelineChart(events) {
+    const container = d3.select("#chart-timeline");
+    const width = 400;
+    const height = 180;
+    const margin = { top: 20, right: 20, bottom: 30, left: 50 };
+
+    const svg = container
+        .attr("width", width)
+        .attr("height", height);
+
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const g = svg.append("g")
+        .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Aggregate by year
+    const yearData = d3.rollup(
+        events,
+        v => d3.sum(v, d => d.best),
+        d => d.year
+    );
+
+    const data = Array.from(yearData, ([year, casualties]) => ({ year, casualties }))
+        .sort((a, b) => a.year - b.year);
+
+    // Scales
+    const x = d3.scaleLinear()
+        .domain(d3.extent(data, d => d.year))
+        .range([0, chartWidth]);
+
+    const y = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.casualties)])
+        .nice()
+        .range([chartHeight, 0]);
+
+    // Line
+    const line = d3.line()
+        .x(d => x(d.year))
+        .y(d => y(d.casualties))
+        .curve(d3.curveMonotoneX);
+
+    // Area
+    const area = d3.area()
+        .x(d => x(d.year))
+        .y0(chartHeight)
+        .y1(d => y(d.casualties))
+        .curve(d3.curveMonotoneX);
+
+    // Draw area
+    g.append("path")
+        .datum(data)
+        .attr("fill", "rgba(239, 68, 68, 0.2)")
+        .attr("d", area);
+
+    // Draw line
+    g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#ef4444")
+        .attr("stroke-width", 2)
+        .attr("d", line);
+
+    // Axes
+    g.append("g")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(5))
+        .style("font-size", "10px");
+
+    g.append("g")
+        .call(d3.axisLeft(y).ticks(5))
+        .style("font-size", "10px");
+}
+
+/**
+ * Render violence type distribution pie chart
+ */
+function renderFactionViolenceTypeChart(events) {
+    const container = d3.select("#chart-violence-type");
+    const width = 400;
+    const height = 180;
+    const radius = Math.min(width, height) / 2 - 10;
+
+    container
+        .attr("width", width)
+        .attr("height", height);
+
+    const g = container.append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const data = d3.rollup(
+        events,
+        v => v.length,
+        d => d.type_of_violence_name
+    );
+
+    const pie = d3.pie()
+        .value(d => d[1])
+        .sort(null);
+
+    const arc = d3.arc()
+        .innerRadius(radius * 0.5)
+        .outerRadius(radius);
+
+    const arcs = g.selectAll(".arc")
+        .data(pie(Array.from(data)))
+        .join("g")
+        .attr("class", "arc");
+
+    arcs.append("path")
+        .attr("d", arc)
+        .attr("fill", d => TYPE_COLORS[d.data[0]] || "#64748b")
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+    arcs.append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .style("font-size", "10px")
+        .style("fill", "white")
+        .style("font-weight", "600")
+        .text(d => d.data[1] > 5 ? d.data[1] : "");
+}
+
+/**
+ * Render victim composition pie chart
+ */
+function renderFactionVictimChart(events) {
+    const container = d3.select("#chart-victims");
+    const width = 400;
+    const height = 180;
+    const radius = Math.min(width, height) / 2 - 10;
+
+    container
+        .attr("width", width)
+        .attr("height", height);
+
+    const g = container.append("g")
+        .attr("transform", `translate(${width / 2},${height / 2})`);
+
+    const civilianCasualties = d3.sum(events, e => (e.deaths_civilians || 0));
+    const combatantCasualties = d3.sum(events, e => (e.deaths_a || 0) + (e.deaths_b || 0));
+    const unknownCasualties = d3.sum(events, e => (e.deaths_unknown || 0));
+
+    const data = [
+        { label: "Civilians", value: civilianCasualties, color: "#ef4444" },
+        { label: "Combatants", value: combatantCasualties, color: "#f59e0b" },
+        { label: "Unknown", value: unknownCasualties, color: "#94a3b8" }
+    ].filter(d => d.value > 0);
+
+    const pie = d3.pie()
+        .value(d => d.value)
+        .sort(null);
+
+    const arc = d3.arc()
+        .innerRadius(radius * 0.5)
+        .outerRadius(radius);
+
+    const arcs = g.selectAll(".arc")
+        .data(pie(data))
+        .join("g")
+        .attr("class", "arc");
+
+    arcs.append("path")
+        .attr("d", arc)
+        .attr("fill", d => d.data.color)
+        .attr("stroke", "white")
+        .attr("stroke-width", 2);
+
+    arcs.append("text")
+        .attr("transform", d => `translate(${arc.centroid(d)})`)
+        .attr("text-anchor", "middle")
+        .style("font-size", "10px")
+        .style("fill", "white")
+        .style("font-weight", "600")
+        .text(d => d.data.value > 50 ? d3.format(",")(d.data.value) : "");
+}
+
+/**
+ * Render top events list
+ */
+function renderFactionTopEvents(events) {
+    const container = d3.select("#chart-top-events");
+    container.selectAll("*").remove();
+
+    const topEvents = events
+        .sort((a, b) => b.best - a.best)
+        .slice(0, 10);
+
+    topEvents.forEach((event, idx) => {
+        const item = container.append("div")
+            .attr("class", "event-item")
+            .style("cursor", "pointer")
+            .on("click", () => {
+                selectEvent(event);
+            });
+
+        item.append("div")
+            .attr("class", "event-item-title")
+            .text(`${idx + 1}. ${event.country} - ${event.dyad_name || "Conflict"}`);
+
+        item.append("div")
+            .attr("class", "event-item-meta")
+            .html(`
+                ${event.date_start || event.year} • 
+                <strong style="color: #ef4444;">${d3.format(",")(event.best)} casualties</strong> • 
+                ${event.type_of_violence_name}
+            `);
+    });
+}
 
 function drawCapitalMarker(countryName) {
     const info = countryInfoMap.get(countryName);
@@ -2574,44 +2488,94 @@ function getFilteredData() {
     return data;
 }
 
+// ============================================================================
+// UNIFIED DASHBOARD UI - Integration Point
+// This is the SINGLE function that renders statistics panel for both views
+// ============================================================================
+
+/**
+ * Update Dashboard UI - Main integration function
+ * Renders the right panel with charts using ChartRenderer
+ * 
+ * @param {Array} filteredEvents - Array of event objects (already filtered by country/faction)
+ * @param {string} title - Title to display in the panel header
+ * @param {string} subtitle - Subtitle to display (e.g., region name)
+ */
+function updateDashboardUI(filteredEvents, title, subtitle) {
+    // Safety check - if ChartRenderer not loaded, skip
+    if (typeof ChartRenderer === 'undefined') {
+        console.warn('ChartRenderer not loaded, skipping dashboard update');
+        return;
+    }
+
+    if (typeof dataManager === 'undefined') {
+        console.warn('dataManager not loaded, skipping dashboard update');
+        return;
+    }
+
+    // Show right panel
+    const chartsPanel = d3.select("#charts-panel");
+    chartsPanel.style("display", "flex");
+
+    // Update panel header
+    d3.select("#charts-title").text(title || "Statistics");
+    d3.select("#charts-subtitle").text(subtitle || "Comprehensive Data");
+
+    // Show standard chart containers
+    chartsPanel.selectAll(".chart-container").style("display", "block");
+
+    // Handle empty data
+    if (!filteredEvents || filteredEvents.length === 0) {
+        console.warn("No events data for charts");
+        d3.select("#chart-timeline").selectAll("*").remove();
+        d3.select("#faction-connected-chart").html('<p style="color: #94a3b8; text-align: center;">No data available</p>');
+        d3.select("#chart-top-events").html('<p style="color: #94a3b8; text-align: center;">No events available</p>');
+        return;
+    }
+
+    // Aggregate data for charts using DataManager
+    const chartData = dataManager.aggregateDataForCharts(filteredEvents);
+
+    // ========================================================================
+    // RENDER CHARTS - Matching User Image 1 Layout
+    // ========================================================================
+
+    // Chart 1: Timeline (Casualties over time)
+    ChartRenderer.drawTimelineChart(chartData.byYear, '#chart-timeline');
+
+    // Chart 2: Connected Factions bar chart
+    renderConnectedFactionsChart(null, filteredEvents, window.currentConnectedFactions || []);
+
+    // Chart 3: Top Events List
+    ChartRenderer.renderTopEventsList(chartData.topEvents, '#chart-top-events', {
+        onEventClick: (event) => selectEvent(event)
+    });
+}
+
+/**
+ * Update All Charts - Wrapper function for backward compatibility
+ * Determines context and calls updateDashboardUI with appropriate params
+ */
 function updateAllCharts() {
     if (viewState.mode === 'world') {
         renderTopCountriesList();
     } else if (viewState.mode === 'country') {
-        // Use unified updateDashboardUI for country view
-        const currentYear = +document.getElementById('year-slider').value;
-        let events = viewState.selectedCountryData?.events?.filter(e => e.year <= currentYear) || [];
-
-        // Apply violence type filter if active
-        if (viewState.selectedViolenceType) {
-            events = events.filter(e => e.type_of_violence_name === viewState.selectedViolenceType);
-        }
-        // Apply faction filter if active
-        if (viewState.selectedFaction) {
-            events = events.filter(e => {
-                const sideA = e.side_a || '';
-                const sideB = e.side_b || '';
-                return sideA.includes(viewState.selectedFaction) || sideB.includes(viewState.selectedFaction);
-            });
-        }
-
+        // Country view - get events and call unified dashboard
+        const events = getFilteredData();
         const countryName = viewState.selectedCountryName || 'Country';
         const region = viewState.selectedCountryData?.region || '';
-        updateDashboardUI(events, `Statistics: ${countryName}`, region, selectEvent);
+        updateDashboardUI(events, `${countryName} Statistics`, region);
 
     } else if (viewState.mode === 'faction') {
-        // Use unified updateDashboardUI for faction view
-        const currentYear = +document.getElementById('year-slider').value;
-        let events = viewState.selectedFactionData?.filter(e => e.year <= currentYear) || [];
-
+        // Faction view - use faction data
+        const events = getFilteredData();
         const factionName = viewState.selectedFactionName || 'Faction';
-        updateDashboardUI(events, `Faction: ${factionName}`, 'Faction Statistics', selectEvent);
+        updateDashboardUI(events, 'Faction Statistics', factionName);
 
     } else if (viewState.mode === 'event') {
         renderEventDetailsView(viewState.selectedEvent);
     }
 }
-
 
 function renderTopCountriesList() {
     const container = d3.select("#charts-panel");
@@ -2619,13 +2583,12 @@ function renderTopCountriesList() {
     d3.select("#charts-title").text("Top Countries");
     d3.select("#charts-subtitle").text("Comprehensive Statistics");
 
-    // Clear existing charts
+    // Clear existing charts - use containers that actually exist
     d3.select("#chart-timeline").selectAll("*").remove();
-    d3.select("#chart-violence-type").selectAll("*").remove();
-    d3.select("#chart-victims").selectAll("*").remove();
-    d3.select("#chart-top-events").html('');
+    d3.select("#faction-connected-chart").html("");
+    d3.select("#chart-top-events").html("");
 
-    // Hide unused chart containers
+    // Hide chart containers, will show top-countries-list instead
     container.selectAll(".chart-container").style("display", "none");
 
     // Create or select Top Countries container
@@ -3248,204 +3211,9 @@ function renderTopEventsList() {
     });
 }
 
-function renderEventDetailsView(d) {
-    const container = d3.select("#charts-panel");
-    container.style("display", "flex");
-    d3.select("#charts-title").text("Event Details");
-    d3.select("#charts-subtitle").text(d.dyad_name);
-
-    // Hide all chart containers first
-    container.selectAll(".chart-container").style("display", "none");
-
-    // 1. Text Details - Reuse existing container with optimized updates
-    let detailsContainer = container.select("#event-text-details");
-    if (detailsContainer.empty()) {
-        detailsContainer = container.append("div")
-            .attr("id", "event-text-details")
-            .attr("class", "chart-container");
-    }
-
-    detailsContainer
-        .style("display", "block")
-        .html(`
-        <div class="country-info-item">
-            <span class="country-info-label">Date:</span>
-            <span class="country-info-value">${d.date_start || d.year}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Side A:</span>
-            <span class="country-info-value">${d.side_a}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Side B:</span>
-            <span class="country-info-value">${d.side_b}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Casualties:</span>
-            <span class="country-info-value" style="color: #ef4444;">${d3.format(",d")(d.best)}</span>
-        </div>
-        <div class="country-info-item" style="border-bottom: none; display: block;">
-             <span class="country-info-label">Description:</span><br>
-             <p style="color: #cbd5e1; font-size: 0.85rem; margin-top: 5px; line-height: 1.4;">
-                ${d.where_description || 'No detailed description available.'}
-             </p>
-        </div>
-    `);
-
-    // 2. Victim Chart - Only render if casualties > 100
-    if (d.best <= 100) {
-        // Hide the victim chart container when not needed
-        const victimChartContainer = container.selectAll(".chart-container").filter(function () {
-            return d3.select(this).select("#chart-victims").size() > 0;
-        });
-        victimChartContainer.style("display", "none");
-        return; // Early exit
-    }
-
-    // Pre-filter and sort victim data
-    const victims = [
-        { category: 'Country', deaths: d.deaths_a || 0 },
-        { category: 'Opponent', deaths: d.deaths_b || 0 },
-        { category: 'Civilians', deaths: d.deaths_civilians || 0 },
-        { category: 'Unknown', deaths: d.deaths_unknown || 0 }
-    ].filter(v => v.deaths > 0).sort((a, b) => b.deaths - a.deaths);
-
-    // Find the chart-victims container in the HTML
-    const victimChartContainer = container.selectAll(".chart-container").filter(function () {
-        return d3.select(this).select("#chart-victims").size() > 0;
-    });
-
-    if (victimChartContainer.empty()) {
-        console.error("chart-victims container not found");
-        return;
-    }
-
-    victimChartContainer.style("display", "block");
-
-    // Use requestAnimationFrame to batch chart rendering
-    requestAnimationFrame(() => {
-        const svg = d3.select("#chart-victims");
-        const width = victimChartContainer.node().getBoundingClientRect().width || 300;
-        const height = 260; // Increased height for labels
-        const radius = Math.min(width, height - 60) / 2 - 30; // Leave space for labels and legend
-
-        // Cache SVG dimensions and group if not already cached or size changed
-        if (!cachedVictimChartSVG || cachedVictimChartSVG.attr("width") !== width.toString()) {
-            svg.attr("width", width).attr("height", height);
-            cachedVictimChartSVG = svg;
-        }
-
-        // Clear existing content more efficiently
-        svg.selectAll("g").remove();
-
-        const g = svg.append("g").attr("transform", `translate(${width / 2},${(height - 40) / 2})`);
-        cachedVictimChartG = g;
-
-        // Pre-defined color scale (avoid recreation)
-        const color = d3.scaleOrdinal()
-            .domain(['Country', 'Opponent', 'Civilians', 'Unknown'])
-            .range(['#d62728', '#1f77b4', '#2ca02c', '#7f7f7f']);
-
-        const pie = d3.pie().value(d => d.deaths).sort(null);
-        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 0.8);
-        const labelArc = d3.arc().innerRadius(radius * 0.9).outerRadius(radius * 0.9);
-
-        // Calculate total for percentages
-        const total = d3.sum(victims, v => v.deaths);
-
-        // Use D3 update pattern for better performance
-        const arcs = g.selectAll(".arc")
-            .data(pie(victims), d => d.data.category);
-
-        // Exit
-        arcs.exit().remove();
-
-        // Enter + Update
-        const arcsEnter = arcs.enter()
-            .append("g")
-            .attr("class", "arc");
-
-        arcsEnter.append("path")
-            .attr("d", arc)
-            .attr("fill", d => color(d.data.category))
-            .attr("stroke", "#0f172a")
-            .style("stroke-width", "2px")
-            .style("opacity", 0.8)
-            .on("mouseover", function (event, d) {
-                d3.select(this).style("opacity", 1).style("stroke", "#fff");
-            })
-            .on("mouseout", function () {
-                d3.select(this).style("opacity", 0.8).style("stroke", "#0f172a");
-            });
-
-        // Add persistent labels with percentages
-        arcsEnter.append("text")
-            .attr("class", "arc-label")
-            .attr("transform", d => {
-                const pos = labelArc.centroid(d);
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                pos[0] = radius * 1.1 * (midAngle < Math.PI ? 1 : -1);
-                return `translate(${pos})`;
-            })
-            .attr("text-anchor", d => {
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                return midAngle < Math.PI ? "start" : "end";
-            })
-            .style("fill", "#0f172a")
-            .style("font-size", "0.7rem")
-            .style("font-weight", "600")
-            .text(d => {
-                const percentage = ((d.data.deaths / total) * 100).toFixed(1);
-                return `${d.data.category}: ${percentage}%`;
-            });
-
-        // Add polylines connecting labels to segments
-        arcsEnter.append("polyline")
-            .attr("class", "arc-line")
-            .attr("points", d => {
-                const pos = labelArc.centroid(d);
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                const labelPos = [radius * 1.05 * (midAngle < Math.PI ? 1 : -1), pos[1]];
-                return [arc.centroid(d), labelArc.centroid(d), labelPos];
-            })
-            .style("fill", "none")
-            .style("stroke", "#94a3b8")
-            .style("stroke-width", "1px")
-            .style("opacity", 0.5);
-
-        // Update existing arcs
-        arcs.select("path")
-            .attr("d", arc)
-            .attr("fill", d => color(d.data.category));
-
-        // Add legend at the bottom
-        const legend = svg.append("g")
-            .attr("class", "victim-legend")
-            .attr("transform", `translate(10, ${height - 35})`);
-
-        victims.forEach((v, i) => {
-            const legendItem = legend.append("g")
-                .attr("transform", `translate(${i * (width / victims.length)}, 0)`);
-
-            legendItem.append("rect")
-                .attr("width", 10)
-                .attr("height", 10)
-                .attr("fill", color(v.category))
-                .attr("rx", 2);
-
-            legendItem.append("text")
-                .attr("x", 14)
-                .attr("y", 9)
-                .style("fill", "#64748b")
-                .style("font-size", "0.65rem")
-                .text(`${v.category} (${d3.format(",d")(v.deaths)})`);
-        });
-    });
-}
-
-
-
-
+// NOTE: renderEventDetailsView function is defined earlier in this file (around line 668)
+// with the modern UI design including bar charts and emoji icons.
+// The duplicate function here was removed to ensure consistent Event Detail display.
 // ============================================================================
 // COUNTRY INFORMATION API
 // ============================================================================
@@ -5034,35 +4802,118 @@ function initAllFactionsGraph() {
             .attr("y", d => d.y);
     });
 
-    // Update faction rankings
-    updateFactionRankings(nodes);
+    // Update faction rankings - this is world view, so show sort controls
+    updateFactionRankings(nodes, true);
 }
 
 // ============================================================================
 // UPDATE FACTION RANKINGS
 // ============================================================================
 
-function updateFactionRankings(factions) {
+// Store current sort mode for factions
+let factionSortMode = 'casualties';
+
+/**
+ * Update faction rankings display
+ * @param {Array} factions - Array of faction objects
+ * @param {boolean} isWorldView - If true, show sort controls; if false, hide them
+ */
+function updateFactionRankings(factions, isWorldView = false) {
     const panel = d3.select("#charts-panel");
     panel.style("display", "flex");
-    panel.selectAll("*").remove();
+
+    // Update header based on sort mode
+    const sortLabels = {
+        'casualties': 'Casualties',
+        'events': 'Events',
+        'country': 'Country'
+    };
+    d3.select("#charts-title").text(`Top Factions by ${sortLabels[factionSortMode]}`);
+    d3.select("#charts-subtitle").text("Conflict Analysis");
 
     // Update left panel statistics to reflect filtered factions
     updateGraphStatistics(factions);
 
-    panel.append("h3")
-        .style("margin", "0 0 15px 0")
-        .style("font-size", "18px")
-        .text("Top Factions by Casualties");
+    // Hide all chart containers first
+    panel.selectAll(".chart-container").style("display", "none");
 
-    const topFactions = factions
-        .sort((a, b) => b.casualties - a.casualties)
-        .slice(0, 20);
+    // Show ONLY the Top Events container (which will display the faction list)
+    const topEventsContainer = panel.select(".chart-container:last-child");
+    topEventsContainer.style("display", "block");
+    topEventsContainer.select("h4").text(`Top Factions by ${sortLabels[factionSortMode]}`);
 
-    const list = panel.append("div")
-        .attr("class", "events-list")
-        .style("overflow-y", "auto")
-        .style("flex", "1");
+    // Control sort controls visibility based on isWorldView parameter
+    let sortControls = panel.select("#faction-sort-controls");
+
+    if (!isWorldView) {
+        // Hide sort controls in faction/country view
+        if (!sortControls.empty()) {
+            sortControls.style("display", "none");
+        }
+    } else {
+        // Show sort controls in world view
+        if (sortControls.empty()) {
+            sortControls = panel.insert("div", ".chart-container:last-child")
+                .attr("id", "faction-sort-controls")
+                .attr("class", "sort-controls")
+                .style("display", "flex")
+                .style("gap", "10px")
+                .style("margin-bottom", "10px");
+
+            const modes = [
+                { id: 'casualties', label: 'Casualties' },
+                { id: 'events', label: 'Events' },
+                { id: 'country', label: 'Country' }
+            ];
+
+            modes.forEach(mode => {
+                sortControls.append("button")
+                    .attr("class", "sort-btn")
+                    .attr("data-mode", mode.id)
+                    .text(mode.label)
+                    .style("padding", "5px 10px")
+                    .style("border-radius", "4px")
+                    .style("border", "none")
+                    .style("cursor", "pointer")
+                    .style("background", factionSortMode === mode.id ? "#2563eb" : "#334155")
+                    .style("color", "white")
+                    .style("font-size", "0.75rem")
+                    .on("click", function () {
+                        factionSortMode = mode.id;
+                        // Update button styles
+                        sortControls.selectAll(".sort-btn")
+                            .style("background", function () {
+                                return this.getAttribute("data-mode") === factionSortMode ? "#2563eb" : "#334155";
+                            });
+                        // Re-render with new sort
+                        updateFactionRankings(factions);
+                    });
+            });
+        } else {
+            // Update active button state and make sure it's visible
+            sortControls.style("display", "flex");
+            sortControls.selectAll(".sort-btn")
+                .style("background", function () {
+                    return this.getAttribute("data-mode") === factionSortMode ? "#2563eb" : "#334155";
+                });
+        }
+    }
+
+    // Sort factions based on current mode
+    let sortedFactions;
+    if (factionSortMode === 'casualties') {
+        sortedFactions = [...factions].sort((a, b) => b.casualties - a.casualties);
+    } else if (factionSortMode === 'events') {
+        sortedFactions = [...factions].sort((a, b) => b.participation - a.participation);
+    } else {
+        sortedFactions = [...factions].sort((a, b) => a.country.localeCompare(b.country));
+    }
+
+    const topFactions = sortedFactions.slice(0, 20);
+
+    // Render list in #chart-top-events container
+    const list = d3.select("#chart-top-events");
+    list.html("");
 
     topFactions.forEach((faction, index) => {
         const item = list.append("div")
@@ -5080,13 +4931,11 @@ function updateFactionRankings(factions) {
             if (clickCount === 1) {
                 // Single click: Focus on this faction in graph
                 clickTimer = setTimeout(() => {
-                    // Find the faction node in the graph and trigger focus
                     const graphSvg = d3.select("#graph-svg");
                     const allNodes = graphSvg.selectAll(".graph-node").data();
                     const selectedNode = allNodes.find(n => n.id === faction.id);
 
                     if (selectedNode) {
-                        // Trigger focus mode (hide unrelated nodes)
                         focusOnFaction(selectedNode);
                     }
                     clickCount = 0;
@@ -5113,7 +4962,7 @@ function updateFactionRankings(factions) {
                 <span style="flex: 1;">${faction.id.length > 45 ? faction.id.substring(0, 42) + "..." : faction.id}</span>
             `);
 
-        // Meta information
+        // Meta information - FIX: use participation instead of eventCount
         item.append("div")
             .attr("class", "event-item-meta")
             .html(`
@@ -5395,53 +5244,9 @@ function displayFactionInfo(factionData, allNodes, links) {
         });
     }
 
-    // Yearly Activity Heatmap
+    // Yearly Activity Heatmap (using shared function with months on Y-axis)
     if (factionEvents.length > 0) {
-        factionPanel.append("h4")
-            .style("margin", "1rem 0 0.5rem 0")
-            .style("font-size", "0.9rem")
-            .style("color", "#475569")
-            .text("Activity by Year");
-
-        const heatmapContainer = factionPanel.append("div")
-            .style("background", "white")
-            .style("border-radius", "6px")
-            .style("padding", "0.75rem")
-            .style("margin-bottom", "1rem");
-
-        const yearData = d3.rollup(factionEvents, v => d3.sum(v, e => e.best), d => d.year);
-        const years = Array.from(yearData.keys()).sort((a, b) => a - b);
-        const maxCas = d3.max(Array.from(yearData.values()));
-
-        const heatmapSvg = heatmapContainer.append("svg")
-            .attr("width", "100%")
-            .attr("height", 50);
-
-        const cellWidth = Math.max(8, Math.min(15, 280 / years.length));
-
-        years.forEach((year, i) => {
-            const intensity = yearData.get(year) / maxCas;
-            heatmapSvg.append("rect")
-                .attr("x", i * (cellWidth + 2))
-                .attr("y", 0)
-                .attr("width", cellWidth)
-                .attr("height", 30)
-                .attr("fill", d3.interpolateReds(intensity))
-                .attr("rx", 2)
-                .append("title").text(`${year}: ${d3.format(",d")(yearData.get(year))} casualties`);
-        });
-
-        // Year labels (every 5 years)
-        years.filter((y, i) => i % Math.ceil(years.length / 6) === 0).forEach((year, i) => {
-            const idx = years.indexOf(year);
-            heatmapSvg.append("text")
-                .attr("x", idx * (cellWidth + 2) + cellWidth / 2)
-                .attr("y", 45)
-                .attr("text-anchor", "middle")
-                .style("font-size", "8px")
-                .style("fill", "#64748b")
-                .text(year);
-        });
+        renderActivityHeatmap(factionPanel, factionEvents, "Activity by Year");
     }
 
     // Violence Type Breakdown (Mini Bars)
@@ -5498,100 +5303,18 @@ function displayFactionInfo(factionData, allNodes, links) {
         });
     }
 
-    // Connected factions list (interactive filter)
-    if (connectedFactions.length > 0) {
-        factionPanel.append("h4")
-            .style("margin", "1rem 0 0.5rem 0")
-            .style("font-size", "0.9rem")
-            .style("color", "#475569")
-            .text("Connected Factions (Click to Filter)");
-
-        const connectionsList = factionPanel.append("div")
-            .attr("id", "connected-factions-list")
-            .style("max-height", "400px")
-            .style("overflow-y", "auto")
-            .style("background", "white")
-            .style("border-radius", "6px")
-            .style("padding", "0.5rem");
-
-        // Store connected factions for chart updates
-        window.currentConnectedFactions = connectedFactions;
-        window.currentFactionData = factionData;
-        window.currentFactionEvents = factionEvents;
-
-        connectedFactions
-            .sort((a, b) => b.casualties - a.casualties)
-            .forEach(conn => {
-                const isSelected = viewState.selectedConnectedFaction === conn.id;
-
-                const connItem = connectionsList.append("div")
-                    .attr("class", "connected-faction-item")
-                    .attr("data-faction-id", conn.id)
-                    .style("padding", "0.5rem")
-                    .style("margin-bottom", "0.25rem")
-                    .style("border-left", `3px solid ${conn.relationshipType === 'ally' ? '#22c55e' : '#ef4444'}`)
-                    .style("background", isSelected ? "#dbeafe" : "#f8fafc")
-                    .style("border-radius", "4px")
-                    .style("font-size", "0.8rem")
-                    .style("cursor", "pointer")
-                    .style("transition", "all 0.2s ease")
-                    .on("mouseenter", function () {
-                        if (!isSelected) {
-                            d3.select(this).style("background", "#e0e7ff");
-                        }
-                    })
-                    .on("mouseleave", function () {
-                        if (!isSelected) {
-                            d3.select(this).style("background", "#f8fafc");
-                        }
-                    })
-                    .on("click", function () {
-                        const clickedId = conn.id;
-
-                        // Toggle selection
-                        if (viewState.selectedConnectedFaction === clickedId) {
-                            viewState.selectedConnectedFaction = null;
-                        } else {
-                            viewState.selectedConnectedFaction = clickedId;
-                        }
-
-                        // Update visual selection
-                        connectionsList.selectAll(".connected-faction-item")
-                            .style("background", function () {
-                                const itemId = d3.select(this).attr("data-faction-id");
-                                return viewState.selectedConnectedFaction === itemId ? "#dbeafe" : "#f8fafc";
-                            });
-
-                        // Update charts with filter
-                        updateFactionChartsWithFilter(factionData, factionEvents, connectedFactions);
-                    });
-
-                connItem.append("div")
-                    .style("font-weight", "600")
-                    .style("color", "#1e293b")
-                    .style("margin-bottom", "0.15rem")
-                    .text(conn.id.length > 30 ? conn.id.substring(0, 27) + "..." : conn.id);
-
-                connItem.append("div")
-                    .style("font-size", "0.75rem")
-                    .style("color", "#64748b")
-                    .html(`
-                        <span style="color: ${conn.relationshipType === 'ally' ? '#22c55e' : '#ef4444'}; font-weight: 600;">${conn.relationshipType === 'ally' ? 'Ally' : 'Opponent'}</span> • 
-                        ${conn.country} • <span style="color: #ef4444;">${d3.format(",d")(conn.casualties)}</span> casualties
-                    `);
-            });
-    }
+    // Store connected factions data for Right Panel chart access
+    window.currentConnectedFactions = connectedFactions;
+    window.currentFactionData = factionData;
+    window.currentFactionEvents = factionEvents;
 
     // Display faction charts in right panel
     displayFactionCharts(factionData, factionEvents);
 }
 
 // Display faction charts in right panel (like country view)
+// UNIFIED: Now uses same ChartRenderer as Country View for consistent UI
 function displayFactionCharts(factionData, factionEvents) {
-    const chartsPanel = d3.select("#charts-panel");
-    chartsPanel.style("display", "flex");
-    chartsPanel.selectAll("*").remove();
-
     // Determine header text based on country filter
     const countryFilter = viewState.selectedCountryInFaction;
     const headerTitle = countryFilter
@@ -5601,62 +5324,18 @@ function displayFactionCharts(factionData, factionEvents) {
         ? `${factionData.id} - ${factionEvents.length} events`
         : factionData.id;
 
-    // Header
-    chartsPanel.append("div")
-        .attr("class", "charts-header")
-        .html(`
-            <h3 id="charts-title" style="margin: 0 0 5px 0; font-size: 18px;">${headerTitle}</h3>
-            <p style="margin: 0; font-size: 14px; color: #64748b;">${subTitle}</p>
-        `);
-
-    if (factionEvents.length === 0) {
-        chartsPanel.append("div")
-            .style("padding", "2rem")
-            .style("text-align", "center")
-            .style("color", "#94a3b8")
-            .text("No event data available for this faction");
-        return;
+    // Use unified updateDashboardUI for SAME charts as Country View
+    if (typeof updateDashboardUI === 'function') {
+        updateDashboardUI(factionEvents, headerTitle, subTitle, highlightAndZoomToEvent);
+    } else {
+        console.warn('updateDashboardUI not available');
     }
-
-    // Chart 1: Timeline
-    const timelineContainer = chartsPanel.append("div")
-        .attr("class", "chart-container")
-        .style("margin-bottom", "1rem");
-    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Casualties Over Time");
-    const timelineSvg = timelineContainer.append("svg")
-        .attr("id", "faction-chart-timeline")
-        .attr("class", "stat-chart")
-        .attr("width", 380)
-        .attr("height", 150);
-    renderFactionChartTimeline(factionEvents, timelineSvg);
-
-    // Chart 2: Connected Factions Casualties (Stacked Bar)
-    const connContainer = chartsPanel.append("div")
-        .attr("id", "faction-connected-chart-container")
-        .attr("class", "chart-container")
-        .style("margin-bottom", "1rem");
-    connContainer.append("h4").style("margin", "0 0 10px 0").text("Conflicts with Connected Factions");
-    const connChartDiv = connContainer.append("div")
-        .attr("id", "faction-connected-chart");
-    renderConnectedFactionsChart(factionData, factionEvents, window.currentConnectedFactions || []);
-
-    // Chart 3: Top Events
-    const eventsContainer = chartsPanel.append("div")
-        .attr("class", "chart-container");
-    eventsContainer.append("h4").style("margin", "0 0 10px 0").text("Most Severe Events");
-    const eventsList = eventsContainer.append("div")
-        .attr("id", "faction-chart-events")
-        .attr("class", "events-list");
-    renderFactionChartTopEvents(factionEvents, eventsList);
 }
 
 // Update charts when connected faction filter changes
+// UNIFIED: Uses updateDashboardUI for consistent charts
 function updateFactionChartsWithFilter(factionData, factionEvents, connectedFactions) {
     const selectedFilter = viewState.selectedConnectedFaction;
-
-    // Update the connected factions chart
-    const connChartDiv = d3.select("#faction-connected-chart");
-    connChartDiv.html("");
 
     // Determine filtered events
     let filteredEvents = factionEvents;
@@ -5668,51 +5347,24 @@ function updateFactionChartsWithFilter(factionData, factionEvents, connectedFact
         });
     }
 
-    if (selectedFilter) {
-        // Show detailed casualty breakdown for main faction vs selected
-        renderCasualtyBreakdownChart(factionData, factionEvents, selectedFilter);
+    // Determine title based on filter
+    let headerTitle = "Faction Statistics";
+    let subTitle = factionData?.id || viewState.selectedFactionName || "Unknown";
 
-        // Get relationship type for title
+    if (selectedFilter) {
         const selectedFactionInfo = connectedFactions.find(f => f.id === selectedFilter);
         const isAlly = selectedFactionInfo && selectedFactionInfo.relationshipType === 'ally';
-        const relationLabel = isAlly ? "With Ally" : "vs Opponent";
-
-        // Update chart title with relationship
+        const relationLabel = isAlly ? "Conflicts With Ally" : "Conflicts vs Opponent";
         const shortFilter = selectedFilter.length > 25 ? selectedFilter.substring(0, 22) + '...' : selectedFilter;
-        d3.select("#faction-connected-chart-container h4").text(`${relationLabel}: ${shortFilter}`);
-
-        // UPDATE TIMELINE CHART with filtered events
-        const timelineSvg = d3.select("#faction-chart-timeline");
-        timelineSvg.selectAll("*").remove();
-        renderFactionChartTimeline(filteredEvents, timelineSvg);
-
-        // UPDATE TOP EVENTS with filtered events
-        const eventsList = d3.select("#faction-chart-events");
-        eventsList.selectAll("*").remove();
-        renderFactionChartTopEvents(filteredEvents, eventsList);
-
-        // Filter bubbles on map if in map view
-        filterEventBubblesOnMap(filteredEvents);
-    } else {
-        // Show bar chart of all connected factions
-        renderConnectedFactionsChart(factionData, factionEvents, connectedFactions);
-
-        // Reset event bubbles on map
-        filterEventBubblesOnMap(null);
-
-        // Reset chart title
-        d3.select("#faction-connected-chart-container h4").text("Conflicts with Connected Factions");
-
-        // RESET TIMELINE CHART to all events
-        const timelineSvg = d3.select("#faction-chart-timeline");
-        timelineSvg.selectAll("*").remove();
-        renderFactionChartTimeline(factionEvents, timelineSvg);
-
-        // RESET TOP EVENTS to all events
-        const eventsList = d3.select("#faction-chart-events");
-        eventsList.selectAll("*").remove();
-        renderFactionChartTopEvents(factionEvents, eventsList);
+        headerTitle = relationLabel;
+        subTitle = shortFilter;
     }
+
+    // Use unified dashboard update
+    updateDashboardUI(filteredEvents, headerTitle, subTitle, highlightAndZoomToEvent);
+
+    // Filter bubbles on map if in map view
+    filterEventBubblesOnMap(selectedFilter ? filteredEvents : null);
 }
 
 // Filter event bubbles on map to show only relevant events
@@ -5747,7 +5399,7 @@ function filterEventBubblesOnMap(filteredEvents) {
     });
 }
 
-// Render HORIZONTAL bar chart for connected factions casualties
+// Render HORIZONTAL bar chart for connected factions - counts CONFLICTS not casualties
 function renderConnectedFactionsChart(factionData, factionEvents, connectedFactions) {
     const container = d3.select("#faction-connected-chart");
     container.html("");
@@ -5761,12 +5413,27 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
         return;
     }
 
-    // Get top connected factions by casualties
-    const topFactions = connectedFactions
-        .sort((a, b) => b.casualties - a.casualties)
+    // Calculate CONFLICTS count for each connected faction
+    const factionsWithConflicts = connectedFactions.map(faction => {
+        // Count events where both the main faction and this connected faction are involved
+        const conflictCount = (factionEvents || []).filter(event => {
+            const sideA = event.side_a || '';
+            const sideB = event.side_b || '';
+            return sideA.includes(faction.id) || sideB.includes(faction.id);
+        }).length;
+
+        return {
+            ...faction,
+            conflicts: conflictCount || faction.participation || 1
+        };
+    });
+
+    // Get top connected factions by CONFLICTS
+    const topFactions = factionsWithConflicts
+        .sort((a, b) => b.conflicts - a.conflicts)
         .slice(0, 8);
 
-    const maxCasualties = d3.max(topFactions, d => d.casualties) || 1;
+    const maxConflicts = d3.max(topFactions, d => d.conflicts) || 1;
 
     // Horizontal bar list (no SVG, just HTML for better readability)
     const barList = container.append("div")
@@ -5775,60 +5442,73 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
         .style("gap", "0.5rem");
 
     topFactions.forEach(faction => {
+        const isSelected = viewState.selectedConnectedFaction === faction.id;
+        const barPercent = (faction.conflicts / maxConflicts) * 100;
+
         const barRow = barList.append("div")
             .attr("class", "conn-faction-bar-row")
             .attr("data-faction-id", faction.id)
             .style("cursor", "pointer")
             .style("padding", "0.5rem")
-            .style("background", viewState.selectedConnectedFaction === faction.id ? "#dbeafe" : "#f8fafc")
+            .style("background", isSelected ? "#dbeafe" : "#f8fafc")
+            .style("border-left", isSelected ?
+                `3px solid ${faction.relationshipType === 'ally' ? '#22c55e' : '#ef4444'}` :
+                "3px solid transparent")
             .style("border-radius", "6px")
             .style("transition", "all 0.2s ease")
             .on("mouseenter", function () {
-                if (viewState.selectedConnectedFaction !== faction.id) {
+                if (!isSelected) {
                     d3.select(this).style("background", "#e0e7ff");
                 }
             })
             .on("mouseleave", function () {
-                if (viewState.selectedConnectedFaction !== faction.id) {
+                if (!isSelected) {
                     d3.select(this).style("background", "#f8fafc");
                 }
             })
             .on("click", function () {
-                // Toggle filter - same as clicking in connected factions list
+                // Toggle filter
                 if (viewState.selectedConnectedFaction === faction.id) {
                     viewState.selectedConnectedFaction = null;
                 } else {
                     viewState.selectedConnectedFaction = faction.id;
                 }
-                // Update both the list and chart
-                d3.selectAll(".connected-faction-item")
+                // Update visual selection
+                container.selectAll(".conn-faction-bar-row")
                     .style("background", function () {
                         const itemId = d3.select(this).attr("data-faction-id");
                         return viewState.selectedConnectedFaction === itemId ? "#dbeafe" : "#f8fafc";
+                    })
+                    .style("border-left", function () {
+                        const itemId = d3.select(this).attr("data-faction-id");
+                        const f = topFactions.find(ff => ff.id === itemId);
+                        const picked = viewState.selectedConnectedFaction === itemId;
+                        const col = f && f.relationshipType === 'ally' ? '#22c55e' : '#ef4444';
+                        return picked ? `3px solid ${col}` : "3px solid transparent";
                     });
+                // Update charts with filter
                 updateFactionChartsWithFilter(factionData, factionEvents, connectedFactions);
             });
 
-        // Faction name row
+        // Faction name row with CONFLICT COUNT
         barRow.append("div")
             .style("display", "flex")
             .style("justify-content", "space-between")
             .style("margin-bottom", "0.25rem")
             .html(`
-                <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b;">
-                    ${faction.id.length > 35 ? faction.id.substring(0, 32) + '...' : faction.id}
+                <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                    ${faction.id.length > 30 ? faction.id.substring(0, 27) + '...' : faction.id}
                 </span>
-                <span style="font-size: 0.8rem; color: ${faction.relationshipType === 'ally' ? '#22c55e' : '#ef4444'}; font-weight: 600;">
-                    ${faction.relationshipType === 'ally' ? 'Ally' : 'Opponent'}
+                <span style="font-size: 0.75rem; color: ${faction.relationshipType === 'ally' ? '#22c55e' : '#ef4444'}; font-weight: 600;">
+                    ${d3.format(",d")(faction.conflicts)} conflicts
                 </span>
             `);
 
         // Horizontal bar
-        const barPercent = (faction.casualties / maxCasualties) * 100;
         barRow.append("div")
-            .style("height", "12px")
+            .style("height", "10px")
             .style("background", "#e2e8f0")
-            .style("border-radius", "6px")
+            .style("border-radius", "5px")
             .style("overflow", "hidden")
             .append("div")
             .style("height", "100%")
@@ -5836,14 +5516,7 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
             .style("background", faction.relationshipType === 'ally' ?
                 "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)" :
                 "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)")
-            .style("border-radius", "6px");
-
-        // Casualty number
-        barRow.append("div")
-            .style("font-size", "0.7rem")
-            .style("color", "#64748b")
-            .style("margin-top", "0.15rem")
-            .text(`${d3.format(",d")(faction.casualties)} casualties`);
+            .style("border-radius", "5px");
     });
 
     // Legend
@@ -6681,9 +6354,7 @@ function drawFactionEventBubbles(events, viewLevel) {
                     event.stopPropagation();
                     selectFactionEvent(d);
                 })
-                .call(enter => enter.transition()
-                    .duration(600)
-                    .attr("r", d => radiusScale(d.best))),
+                .attr("r", d => radiusScale(d.best)),
             update => update,
             exit => exit.remove()
         );
@@ -6728,8 +6399,7 @@ function drawFactionCountryBubbles(events, countries) {
                 .attr("r", 0)
                 .style("fill", REGION_COLORS[viewState.selectedFactionData?.[0]?.region] || "#3b82f6")
                 .style("fill-opacity", 0.7)
-                .style("stroke", "#fff")
-                .style("stroke-width", 2)
+                .style("stroke", "none")
                 .style("cursor", "pointer")
                 .on("click", (event, d) => {
                     event.stopPropagation();
@@ -6768,9 +6438,7 @@ function drawFactionCountryBubbles(events, countries) {
                         }, 600);
                     }
                 })
-                .call(enter => enter.transition()
-                    .duration(600)
-                    .attr("r", d => radiusScale(d.casualties))),
+                .attr("r", d => radiusScale(d.casualties)),
             update => update,
             exit => exit.remove()
         );
@@ -7397,15 +7065,15 @@ function renderFactionEventDetails(event) {
             <!-- Visual Bar Chart -->
             <div id="casualties-bar-chart" style="margin-bottom: 1rem; height: 30px; background: #e2e8f0; border-radius: 4px; overflow: hidden; display: flex;">
                 ${event.deaths_a > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: ${(event.deaths_a / event.best * 100)}%;" title="Country Forces: ${d3.format(",d")(event.deaths_a)} (${d3.format(".1%")(event.deaths_a / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); width: ${(event.deaths_a / event.best * 100)}%;" title="Side A: ${d3.format(",d")(event.deaths_a)} (${d3.format(".1%")(event.deaths_a / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_b > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); width: ${(event.deaths_b / event.best * 100)}%;" title="Opponent Forces: ${d3.format(",d")(event.deaths_b)} (${d3.format(".1%")(event.deaths_b / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); width: ${(event.deaths_b / event.best * 100)}%;" title="Side B: ${d3.format(",d")(event.deaths_b)} (${d3.format(".1%")(event.deaths_b / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="height: 100%; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
+                <div style="height: 100%; background: linear-gradient(135deg, #16a34a 0%, #22c55e 100%); width: ${(event.deaths_civilians / event.best * 100)}%;" title="Civilians: ${d3.format(",d")(event.deaths_civilians)} (${d3.format(".1%")(event.deaths_civilians / event.best)})">
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
@@ -7418,57 +7086,52 @@ function renderFactionEventDetails(event) {
             <div style="display: flex; flex-direction: column; gap: 0.75rem;">
                 ${event.deaths_a > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #ef4444;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Side A: ${event.side_a || 'Unknown'}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_a)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_a / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Side A: ${event.side_a || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #ef4444;">${d3.format(",d")(event.deaths_a)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_b > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #3b82f6;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Side B: ${event.side_b || 'Unknown'}</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_b)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_b / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Side B: ${event.side_b || 'Unknown'}</span>
+                    <span style="font-weight: 600; color: #3b82f6;">${d3.format(",d")(event.deaths_b)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_civilians > 0 ? `
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #dc2626;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #b91c1c 0%, #dc2626 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Civilian Casualties</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #dc2626; font-size: 0.9rem;">${d3.format(",d")(event.deaths_civilians)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_civilians / event.best)}</div>
-                    </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #22c55e;">
+                    <span style="font-size: 0.8rem; color: #475569;">Civilians</span>
+                    <span style="font-weight: 600; color: #16a34a;">${d3.format(",d")(event.deaths_civilians)}</span>
                 </div>
                 ` : ''}
                 ${event.deaths_unknown > 0 ? `
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: white; border-radius: 4px; border-left: 3px solid #78716c;">
-                    <div style="display: flex; align-items: center; gap: 0.5rem;">
-                        <div style="width: 12px; height: 12px; background: linear-gradient(135deg, #57534e 0%, #78716c 100%); border-radius: 2px;"></div>
-                        <span style="color: #475569; font-size: 0.85rem; font-weight: 500;">Unknown Affiliation</span>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-weight: 700; color: #0f172a; font-size: 0.9rem;">${d3.format(",d")(event.deaths_unknown)}</div>
-                        <div style="font-size: 0.7rem; color: #94a3b8;">${d3.format(".1%")(event.deaths_unknown / event.best)}</div>
-                    </div>
+                    <span style="font-size: 0.8rem; color: #475569;">Unknown</span>
+                    <span style="font-weight: 600; color: #78716c;">${d3.format(",d")(event.deaths_unknown)}</span>
                 </div>
                 ` : ''}
             </div>
         </div>
         
+        <!-- Factions Involved -->
+        <div style="padding: 1rem; background: white; border-radius: 8px; border: 1px solid rgba(0, 0, 0, 0.05);">
+            <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
+                Factions Involved
+            </h4>
+            ${event.side_a ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(239, 68, 68, 0.05); border-radius: 4px; margin-bottom: 0.5rem;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_a}</span>
+                <span style="font-size: 0.75rem; color: #ef4444;">Side A</span>
+            </div>
+            ` : ''}
+            ${event.side_b ? `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; background: rgba(59, 130, 246, 0.05); border-radius: 4px;">
+                <span style="font-size: 0.8rem; color: #475569; font-weight: 500;">${event.side_b}</span>
+                <span style="font-size: 0.75rem; color: #3b82f6;">Side B</span>
+            </div>
+            ` : ''}
+        </div>
+        
         ${event.source_headline || event.source_article ? `
-        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.1);">
+        <div style="padding: 1rem; background: rgba(59, 130, 246, 0.05); border-radius: 8px; margin-top: 1rem; border: 1px solid rgba(59, 130, 246, 0.1);">
             <h4 style="font-size: 0.875rem; font-weight: 600; color: #1e293b; margin-bottom: 0.75rem;">
                 Source Information
             </h4>

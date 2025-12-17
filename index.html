@@ -11,9 +11,8 @@
     <!-- TopoJSON for world map data -->
     <script src="https://unpkg.com/topojson@3"></script>
 
-    <!-- CSS: Load both stylesheets for unified styling -->
+    <!-- CSS: Unified stylesheet -->
     <link rel="stylesheet" href="globe.css">
-    <link rel="stylesheet" href="graph-view.css">
 </head>
 
 <body>
@@ -116,30 +115,10 @@
                 </div>
             </main>
 
-            <!-- RIGHT PANEL: Statistical Charts (Unified with Graph View) -->
+            <!-- RIGHT PANEL: Statistical Charts (Built dynamically by global-new.js) -->
             <aside class="right-panel" id="charts-panel" style="display: none;">
-                <div class="charts-header">
-                    <h3 id="charts-title">Statistics</h3>
-                    <p id="charts-subtitle">Comprehensive Data</p>
-                </div>
-
-                <!-- Chart 1: Timeline -->
-                <div class="chart-container">
-                    <h4>Casualties Over Time</h4>
-                    <svg id="chart-timeline" class="stat-chart"></svg>
-                </div>
-
-                <!-- Chart 2: Active Factions (Horizontal Bar Chart - Click to Filter) -->
-                <div class="chart-container" id="faction-connected-chart-container">
-                    <h4>Active Factions</h4>
-                    <div id="faction-connected-chart" class="factions-chart"></div>
-                </div>
-
-                <!-- Chart 3: Top Events -->
-                <div class="chart-container">
-                    <h4>Most Severe Events</h4>
-                    <div id="chart-top-events" class="events-list"></div>
-                </div>
+                <!-- Content is built dynamically by updateDashboardUILocal() in global-new.js -->
+                <!-- Structure matches graph.html but rendered via JavaScript -->
             </aside>
         </div>
 
@@ -168,7 +147,7 @@
     <script src="js/ui/ChartRenderer.js"></script>
     <script src="js/ui/FilterPanel.js"></script>
     <!-- Load Map View script -->
-    <script src="global.js"></script>
+    <script src="global-new.js"></script>
 
 </body>
 

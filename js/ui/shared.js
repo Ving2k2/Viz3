@@ -1113,6 +1113,7 @@ function renderEventsList(container, events, options = {}) {
 
 /**
  * Unified updateDashboardUI - used by both Graph and Map views to update the Charts Panel
+ * Renders: Casualties Over Time (line chart) + Conflicts with Connected Factions (bar chart) + Most Severe Events
  * @param {Array} events - List of events to display stats for
  * @param {String} title - Main title
  * @param {String} subtitle - Subtitle (e.g. Faction Name or Region)
@@ -1121,9 +1122,6 @@ function renderEventsList(container, events, options = {}) {
 function updateDashboardUI(events, title, subtitle, onEventClick) {
     const chartsPanel = d3.select("#charts-panel");
     chartsPanel.style("display", "flex");
-
-    // Clear existing content except header if we want to preserve it? 
-    // Usually we rebuild.
     chartsPanel.selectAll("*").remove();
 
     // 1. Header
@@ -1156,37 +1154,253 @@ function updateDashboardUI(events, title, subtitle, onEventClick) {
         return;
     }
 
-    // 2. Stats Grid (Summary)
-    const totalCasualties = d3.sum(events, e => e.best);
-    const totalEvents = events.length;
-    // Calculate most active year
-    const byYear = d3.rollup(events, v => v.length, d => d.year);
-    const mostActiveYear = Array.from(byYear).sort((a, b) => b[1] - a[1])[0];
+    // 2. Casualties Over Time (Line Chart)
+    const timelineContainer = chartsPanel.append("div")
+        .attr("class", "chart-container")
+        .style("margin-bottom", "1rem");
+    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Casualties Over Time");
+    const timelineSvg = timelineContainer.append("svg")
+        .attr("id", "chart-timeline")
+        .attr("class", "stat-chart")
+        .attr("width", 380)
+        .attr("height", 150);
+    renderTimelineChartShared(events, timelineSvg);
 
-    const stats = [
-        { label: "Total Casualties", value: d3.format(",d")(totalCasualties), color: "#ef4444" },
-        { label: "Total Events", value: d3.format(",d")(totalEvents), color: "#3b82f6" }
-    ];
+    // 3. Conflicts with Connected Factions (Bar Chart)
+    const connContainer = chartsPanel.append("div")
+        .attr("id", "faction-connected-chart-container")
+        .attr("class", "chart-container")
+        .style("margin-bottom", "1rem");
+    connContainer.append("h4").style("margin", "0 0 10px 0").text("Conflicts with Connected Factions");
+    const connChartDiv = connContainer.append("div")
+        .attr("id", "faction-connected-chart");
+    renderConnectedFactionsChartShared(events, connChartDiv);
 
-    if (mostActiveYear) {
-        stats.push({ label: "Most Active Year", value: mostActiveYear[0], color: "#f59e0b" });
-    }
-
-    renderStatsGrid(chartsPanel, stats);
-
-    // 3. Activity Heatmap
-    renderActivityHeatmap(chartsPanel, events, "Activity Timeline");
-
-    // 4. Violence Type Breakdown
-    renderViolenceTypeBreakdown(chartsPanel, events);
-
-    // 5. Most Severe Events List
-    // We try to use the passed click handler, or fallback to a global one if it exists
+    // 4. Most Severe Events List
     const clickHandler = onEventClick || (typeof highlightAndZoomToEvent === 'function' ? highlightAndZoomToEvent : null);
-
     renderEventsList(chartsPanel, events, {
         title: "Most Severe Events",
         limit: 20,
         onClick: clickHandler
     });
 }
+
+// Render DUAL-AXIS chart: Casualties (line) + Events Count (bars) by Year
+function renderTimelineChartShared(events, svg) {
+    const width = 380, height = 150;
+    const margin = { top: 15, right: 45, bottom: 25, left: 45 };
+    const chartWidth = width - margin.left - margin.right;
+    const chartHeight = height - margin.top - margin.bottom;
+
+    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Aggregate by year: casualties and events count
+    const yearDataMap = d3.rollup(events,
+        v => ({ casualties: d3.sum(v, e => e.best), count: v.length }),
+        d => d.year
+    );
+    const data = Array.from(yearDataMap, ([year, values]) => ({ year, ...values }))
+        .sort((a, b) => a.year - b.year);
+
+    if (data.length === 0) return;
+
+    const x = d3.scaleBand()
+        .domain(data.map(d => d.year))
+        .range([0, chartWidth])
+        .padding(0.3);
+
+    const yCasualties = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.casualties)])
+        .nice()
+        .range([chartHeight, 0]);
+
+    const yEvents = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.count)])
+        .nice()
+        .range([chartHeight, 0]);
+
+    // Draw bars (Events Count - blue)
+    g.selectAll(".event-bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "event-bar")
+        .attr("x", d => x(d.year))
+        .attr("y", d => yEvents(d.count))
+        .attr("width", x.bandwidth())
+        .attr("height", d => chartHeight - yEvents(d.count))
+        .attr("fill", "rgba(59, 130, 246, 0.4)")
+        .attr("rx", 2)
+        .append("title")
+        .text(d => `${d.year}: ${d.count} events, ${d3.format(",d")(d.casualties)} casualties`);
+
+    // Draw line (Casualties - red)
+    const line = d3.line()
+        .x(d => x(d.year) + x.bandwidth() / 2)
+        .y(d => yCasualties(d.casualties));
+
+    g.append("path")
+        .datum(data)
+        .attr("fill", "none")
+        .attr("stroke", "#ef4444")
+        .attr("stroke-width", 2.5)
+        .attr("d", line);
+
+    // Draw dots on line
+    g.selectAll(".casualty-dot")
+        .data(data)
+        .join("circle")
+        .attr("class", "casualty-dot")
+        .attr("cx", d => x(d.year) + x.bandwidth() / 2)
+        .attr("cy", d => yCasualties(d.casualties))
+        .attr("r", 3)
+        .attr("fill", "#ef4444");
+
+    // X-axis (years)
+    const yearLabels = data.filter((d, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0);
+    g.append("g")
+        .attr("transform", `translate(0,${chartHeight})`)
+        .call(d3.axisBottom(x).tickValues(yearLabels.map(d => d.year)).tickFormat(d3.format("d")))
+        .style("font-size", "8px");
+
+    // Left Y-axis (Casualties - red)
+    g.append("g")
+        .call(d3.axisLeft(yCasualties).ticks(4).tickFormat(d3.format(".2s")))
+        .style("font-size", "8px")
+        .selectAll("text").style("fill", "#ef4444");
+
+    // Right Y-axis (Events - blue)
+    g.append("g")
+        .attr("transform", `translate(${chartWidth},0)`)
+        .call(d3.axisRight(yEvents).ticks(4))
+        .style("font-size", "8px")
+        .selectAll("text").style("fill", "#3b82f6");
+
+    // Legend
+    const legendG = g.append("g")
+        .attr("transform", `translate(${chartWidth / 2 - 60}, -8)`);
+
+    legendG.append("line").attr("x1", 0).attr("y1", 5).attr("x2", 15).attr("y2", 5)
+        .attr("stroke", "#ef4444").attr("stroke-width", 2);
+    legendG.append("text").attr("x", 18).attr("y", 8).text("Casualties")
+        .style("font-size", "7px").attr("fill", "#ef4444");
+
+    legendG.append("rect").attr("x", 70).attr("y", 0).attr("width", 10).attr("height", 10)
+        .attr("fill", "rgba(59, 130, 246, 0.6)");
+    legendG.append("text").attr("x", 83).attr("y", 8).text("Events")
+        .style("font-size", "7px").attr("fill", "#3b82f6");
+}
+
+// Render Connected Factions bar chart
+function renderConnectedFactionsChartShared(events, container) {
+    container.html("");
+
+    // Get factions from events
+    const factionCasualties = {};
+    events.forEach(event => {
+        if (event.side_a) {
+            if (!factionCasualties[event.side_a]) {
+                factionCasualties[event.side_a] = { casualties: 0, events: 0, isOpponent: false };
+            }
+            factionCasualties[event.side_a].casualties += event.deaths_a || 0;
+            factionCasualties[event.side_a].events++;
+        }
+        if (event.side_b) {
+            if (!factionCasualties[event.side_b]) {
+                factionCasualties[event.side_b] = { casualties: 0, events: 0, isOpponent: true };
+            }
+            factionCasualties[event.side_b].casualties += event.deaths_b || 0;
+            factionCasualties[event.side_b].events++;
+        }
+    });
+
+    const topFactions = Object.entries(factionCasualties)
+        .map(([id, data]) => ({ id, ...data }))
+        .sort((a, b) => b.casualties - a.casualties)
+        .slice(0, 8);
+
+    if (topFactions.length === 0) {
+        container.append("div")
+            .style("padding", "1rem")
+            .style("text-align", "center")
+            .style("color", "#94a3b8")
+            .text("No faction data available");
+        return;
+    }
+
+    const maxCasualties = d3.max(topFactions, d => d.casualties) || 1;
+
+    // Horizontal bar list
+    const barList = container.append("div")
+        .style("display", "flex")
+        .style("flex-direction", "column")
+        .style("gap", "0.5rem");
+
+    topFactions.forEach(faction => {
+        const barRow = barList.append("div")
+            .attr("class", "conn-faction-bar-row")
+            .style("cursor", "pointer")
+            .style("padding", "0.5rem")
+            .style("background", "#f8fafc")
+            .style("border-radius", "6px")
+            .style("transition", "all 0.2s ease")
+            .on("mouseenter", function () {
+                d3.select(this).style("background", "#e0e7ff");
+            })
+            .on("mouseleave", function () {
+                d3.select(this).style("background", "#f8fafc");
+            });
+
+        // Faction name row
+        barRow.append("div")
+            .style("display", "flex")
+            .style("justify-content", "space-between")
+            .style("margin-bottom", "0.25rem")
+            .html(`
+                <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b;">
+                    ${faction.id.length > 35 ? faction.id.substring(0, 32) + '...' : faction.id}
+                </span>
+                <span style="font-size: 0.8rem; color: ${faction.isOpponent ? '#ef4444' : '#22c55e'}; font-weight: 600;">
+                    ${faction.isOpponent ? 'Opponent' : 'Ally'}
+                </span>
+            `);
+
+        // Horizontal bar
+        const barPercent = (faction.casualties / maxCasualties) * 100;
+        barRow.append("div")
+            .style("height", "12px")
+            .style("background", "#e2e8f0")
+            .style("border-radius", "6px")
+            .style("overflow", "hidden")
+            .append("div")
+            .style("height", "100%")
+            .style("width", `${barPercent}%`)
+            .style("background", faction.isOpponent ?
+                "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)" :
+                "linear-gradient(90deg, #22c55e 0%, #16a34a 100%)")
+            .style("border-radius", "6px");
+
+        // Casualty number
+        barRow.append("div")
+            .style("font-size", "0.7rem")
+            .style("color", "#64748b")
+            .style("margin-top", "0.15rem")
+            .text(`${d3.format(",d")(faction.casualties)} casualties`);
+    });
+
+    // Legend
+    const legend = container.append("div")
+        .style("display", "flex")
+        .style("justify-content", "center")
+        .style("gap", "1rem")
+        .style("margin-top", "0.75rem")
+        .style("padding-top", "0.5rem")
+        .style("border-top", "1px solid #e2e8f0");
+
+    legend.append("div")
+        .style("font-size", "0.75rem")
+        .html('<span style="display:inline-block;width:12px;height:12px;background:#22c55e;border-radius:2px;margin-right:4px;"></span>Ally');
+    legend.append("div")
+        .style("font-size", "0.75rem")
+        .html('<span style="display:inline-block;width:12px;height:12px;background:#ef4444;border-radius:2px;margin-right:4px;"></span>Opponent');
+}
+

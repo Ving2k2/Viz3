@@ -3087,200 +3087,177 @@ function renderTopEventsList() {
     });
 }
 
-function renderEventDetailsView(d) {
-    const container = d3.select("#charts-panel");
-    container.style("display", "flex");
+// OPTIMIZED: Render event details in right panel - UNIFIED with graph.js
+function renderEventDetailsView(event) {
+    if (!event) return;
+
+    // Switch mode to event view
+    viewState.mode = 'event';
+
+    // Show right panel if hidden
+    const chartsPanel = d3.select("#charts-panel");
+    chartsPanel.style("display", "flex");
+
+    // Update panel title
     d3.select("#charts-title").text("Event Details");
-    d3.select("#charts-subtitle").text(d.dyad_name);
+    d3.select("#charts-subtitle").text(event.country || "Conflict Event");
 
-    // Hide all chart containers first
-    container.selectAll(".chart-container").style("display", "none");
 
-    // 1. Text Details - Reuse existing container with optimized updates
-    let detailsContainer = container.select("#event-text-details");
+    // Hide standard chart containers
+    chartsPanel.selectAll(".chart-container").style("display", "none");
+
+    // Clear or create event details container
+    let detailsContainer = chartsPanel.select("#event-text-details");
     if (detailsContainer.empty()) {
-        detailsContainer = container.append("div")
+        detailsContainer = chartsPanel.append("div")
             .attr("id", "event-text-details")
-            .attr("class", "chart-container");
+            .attr("class", "chart-container")
+            .style("display", "block");
+    } else {
+        detailsContainer.html('').style("display", "block");
     }
 
-    detailsContainer
-        .style("display", "block")
-        .html(`
-        <div class="country-info-item">
-            <span class="country-info-label">Date:</span>
-            <span class="country-info-value">${d.date_start || d.year}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Side A:</span>
-            <span class="country-info-value">${d.side_a}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Side B:</span>
-            <span class="country-info-value">${d.side_b}</span>
-        </div>
-        <div class="country-info-item">
-            <span class="country-info-label">Casualties:</span>
-            <span class="country-info-value" style="color: #ef4444;">${d3.format(",d")(d.best)}</span>
-        </div>
-        <div class="country-info-item" style="border-bottom: none; display: block;">
-             <span class="country-info-label">Description:</span><br>
-             <p style="color: #cbd5e1; font-size: 0.85rem; margin-top: 5px; line-height: 1.4;">
-                ${d.where_description || 'No detailed description available.'}
-             </p>
-        </div>
-    `);
-
-    // 2. Victim Chart - Only render if casualties > 100
-    if (d.best <= 100) {
-        // Hide the victim chart container when not needed
-        const victimChartContainer = container.selectAll(".chart-container").filter(function () {
-            return d3.select(this).select("#chart-victims").size() > 0;
+    // Get factions involved in this event (connected factions)
+    const connectedFactions = [];
+    if (event.side_a) {
+        connectedFactions.push({
+            name: event.side_a,
+            casualties: event.deaths_a || 0,
+            relationshipType: 'opponent',
+            color: '#ef4444'
         });
-        victimChartContainer.style("display", "none");
-        return; // Early exit
+    }
+    if (event.side_b) {
+        connectedFactions.push({
+            name: event.side_b,
+            casualties: event.deaths_b || 0,
+            relationshipType: 'opponent',
+            color: '#3b82f6'
+        });
     }
 
-    // Pre-filter and sort victim data
-    const victims = [
-        { category: 'Country', deaths: d.deaths_a || 0 },
-        { category: 'Opponent', deaths: d.deaths_b || 0 },
-        { category: 'Civilians', deaths: d.deaths_civilians || 0 },
-        { category: 'Unknown', deaths: d.deaths_unknown || 0 }
-    ].filter(v => v.deaths > 0).sort((a, b) => b.deaths - a.deaths);
+    // Get all events in same country for context
+    const countryEvents = viewState.selectedCountryData?.eventsWithCoords ||
+        rawData.filter(e => e.country === event.country);
 
-    // Find the chart-victims container in the HTML
-    const victimChartContainer = container.selectAll(".chart-container").filter(function () {
-        return d3.select(this).select("#chart-victims").size() > 0;
+    // Use shared renderEntityInfoPanel for unified UI
+    renderEntityInfoPanel(detailsContainer, {
+        title: "Event Details",
+        entityName: event.dyad_name || 'Unknown Conflict',
+        entitySubtext: `${event.date_start || event.year} • ${event.type_of_violence_name}`,
+        entityColor: TYPE_COLORS[event.type_of_violence_name] || '#64748b',
+        events: [event], // Single event for stats
+        country: event.country,
+        region: event.region,
+        connectedEntities: connectedFactions,
+        connectedTitle: "Factions Involved",
+        showHeatmap: false, // Single event, no heatmap needed
+        showViolenceBreakdown: false // Already showing violence type
     });
 
-    if (victimChartContainer.empty()) {
-        console.error("chart-victims container not found");
-        return;
+    // Add casualties breakdown section (unique to event view)
+    const panel = detailsContainer.select("div");
+
+    // Casualties breakdown card
+    if (event.best > 0) {
+        panel.append("h4")
+            .style("margin", "1rem 0 0.5rem 0")
+            .style("font-size", "0.9rem")
+            .style("color", "#475569")
+            .text("Casualties Breakdown");
+
+        const breakdownContainer = panel.append("div")
+            .style("background", "white")
+            .style("border-radius", "6px")
+            .style("padding", "0.75rem")
+            .style("margin-bottom", "1rem");
+
+        // Visual bar chart
+        const barChart = breakdownContainer.append("div")
+            .style("height", "24px")
+            .style("background", "#e2e8f0")
+            .style("border-radius", "4px")
+            .style("overflow", "hidden")
+            .style("display", "flex")
+            .style("margin-bottom", "0.75rem");
+
+        const casualties = [
+            { label: `Side A: ${event.side_a || 'Unknown'}`, value: event.deaths_a || 0, color: '#ef4444' },
+            { label: `Side B: ${event.side_b || 'Unknown'}`, value: event.deaths_b || 0, color: '#3b82f6' },
+            { label: 'Civilians', value: event.deaths_civilians || 0, color: '#dc2626' },
+            { label: 'Unknown', value: event.deaths_unknown || 0, color: '#78716c' }
+        ].filter(c => c.value > 0);
+
+        casualties.forEach(c => {
+            const pct = (c.value / event.best) * 100;
+            barChart.append("div")
+                .style("width", `${pct}%`)
+                .style("height", "100%")
+                .style("background", c.color)
+                .attr("title", `${c.label}: ${d3.format(",d")(c.value)} (${d3.format(".1%")(c.value / event.best)})`);
+        });
+
+        // Detailed breakdown list
+        casualties.forEach(c => {
+            const pct = (c.value / event.best) * 100;
+            const row = breakdownContainer.append("div")
+                .style("display", "flex")
+                .style("justify-content", "space-between")
+                .style("align-items", "center")
+                .style("padding", "0.4rem 0")
+                .style("border-bottom", "1px solid #f1f5f9");
+
+            row.append("div")
+                .style("display", "flex")
+                .style("align-items", "center")
+                .style("gap", "0.5rem")
+                .html(`
+                    <div style="width: 10px; height: 10px; background: ${c.color}; border-radius: 2px;"></div>
+                    <span style="font-size: 0.8rem; color: #475569;">${c.label}</span>
+                `);
+
+            row.append("div")
+                .style("text-align", "right")
+                .html(`
+                    <span style="font-weight: 600; color: #1e293b; font-size: 0.85rem;">${d3.format(",d")(c.value)}</span>
+                    <span style="font-size: 0.7rem; color: #94a3b8; margin-left: 0.25rem;">(${d3.format(".0%")(pct / 100)})</span>
+                `);
+        });
     }
 
-    victimChartContainer.style("display", "block");
+    // Source information
+    if (event.source_headline || event.source_article) {
+        panel.append("h4")
+            .style("margin", "1rem 0 0.5rem 0")
+            .style("font-size", "0.9rem")
+            .style("color", "#475569")
+            .text("Source Information");
 
-    // Use requestAnimationFrame to batch chart rendering
-    requestAnimationFrame(() => {
-        const svg = d3.select("#chart-victims");
-        const width = victimChartContainer.node().getBoundingClientRect().width || 300;
-        const height = 260; // Increased height for labels
-        const radius = Math.min(width, height - 60) / 2 - 30; // Leave space for labels and legend
+        const sourceContainer = panel.append("div")
+            .style("background", "rgba(59, 130, 246, 0.05)")
+            .style("border-radius", "6px")
+            .style("padding", "0.75rem")
+            .style("border", "1px solid rgba(59, 130, 246, 0.1)");
 
-        // Cache SVG dimensions and group if not already cached or size changed
-        if (!cachedVictimChartSVG || cachedVictimChartSVG.attr("width") !== width.toString()) {
-            svg.attr("width", width).attr("height", height);
-            cachedVictimChartSVG = svg;
+        if (event.source_headline) {
+            sourceContainer.append("p")
+                .style("font-size", "0.85rem")
+                .style("color", "#475569")
+                .style("font-style", "italic")
+                .style("margin-bottom", "0.5rem")
+                .text(`"${event.source_headline}"`);
         }
 
-        // Clear existing content more efficiently
-        svg.selectAll("g").remove();
-
-        const g = svg.append("g").attr("transform", `translate(${width / 2},${(height - 40) / 2})`);
-        cachedVictimChartG = g;
-
-        // Pre-defined color scale (avoid recreation)
-        const color = d3.scaleOrdinal()
-            .domain(['Country', 'Opponent', 'Civilians', 'Unknown'])
-            .range(['#d62728', '#1f77b4', '#2ca02c', '#7f7f7f']);
-
-        const pie = d3.pie().value(d => d.deaths).sort(null);
-        const arc = d3.arc().innerRadius(radius * 0.5).outerRadius(radius * 0.8);
-        const labelArc = d3.arc().innerRadius(radius * 0.9).outerRadius(radius * 0.9);
-
-        // Calculate total for percentages
-        const total = d3.sum(victims, v => v.deaths);
-
-        // Use D3 update pattern for better performance
-        const arcs = g.selectAll(".arc")
-            .data(pie(victims), d => d.data.category);
-
-        // Exit
-        arcs.exit().remove();
-
-        // Enter + Update
-        const arcsEnter = arcs.enter()
-            .append("g")
-            .attr("class", "arc");
-
-        arcsEnter.append("path")
-            .attr("d", arc)
-            .attr("fill", d => color(d.data.category))
-            .attr("stroke", "#0f172a")
-            .style("stroke-width", "2px")
-            .style("opacity", 0.8)
-            .on("mouseover", function (event, d) {
-                d3.select(this).style("opacity", 1).style("stroke", "#fff");
-            })
-            .on("mouseout", function () {
-                d3.select(this).style("opacity", 0.8).style("stroke", "#0f172a");
-            });
-
-        // Add persistent labels with percentages
-        arcsEnter.append("text")
-            .attr("class", "arc-label")
-            .attr("transform", d => {
-                const pos = labelArc.centroid(d);
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                pos[0] = radius * 1.1 * (midAngle < Math.PI ? 1 : -1);
-                return `translate(${pos})`;
-            })
-            .attr("text-anchor", d => {
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                return midAngle < Math.PI ? "start" : "end";
-            })
-            .style("fill", "#0f172a")
-            .style("font-size", "0.7rem")
-            .style("font-weight", "600")
-            .text(d => {
-                const percentage = ((d.data.deaths / total) * 100).toFixed(1);
-                return `${d.data.category}: ${percentage}%`;
-            });
-
-        // Add polylines connecting labels to segments
-        arcsEnter.append("polyline")
-            .attr("class", "arc-line")
-            .attr("points", d => {
-                const pos = labelArc.centroid(d);
-                const midAngle = d.startAngle + (d.endAngle - d.startAngle) / 2;
-                const labelPos = [radius * 1.05 * (midAngle < Math.PI ? 1 : -1), pos[1]];
-                return [arc.centroid(d), labelArc.centroid(d), labelPos];
-            })
-            .style("fill", "none")
-            .style("stroke", "#94a3b8")
-            .style("stroke-width", "1px")
-            .style("opacity", 0.5);
-
-        // Update existing arcs
-        arcs.select("path")
-            .attr("d", arc)
-            .attr("fill", d => color(d.data.category));
-
-        // Add legend at the bottom
-        const legend = svg.append("g")
-            .attr("class", "victim-legend")
-            .attr("transform", `translate(10, ${height - 35})`);
-
-        victims.forEach((v, i) => {
-            const legendItem = legend.append("g")
-                .attr("transform", `translate(${i * (width / victims.length)}, 0)`);
-
-            legendItem.append("rect")
-                .attr("width", 10)
-                .attr("height", 10)
-                .attr("fill", color(v.category))
-                .attr("rx", 2);
-
-            legendItem.append("text")
-                .attr("x", 14)
-                .attr("y", 9)
-                .style("fill", "#64748b")
-                .style("font-size", "0.65rem")
-                .text(`${v.category} (${d3.format(",d")(v.deaths)})`);
-        });
-    });
+        if (event.source_article) {
+            sourceContainer.append("p")
+                .style("font-size", "0.75rem")
+                .style("color", "#94a3b8")
+                .style("line-height", "1.4")
+                .text(event.source_article);
+        }
+    }
 }
+
 
 
 
