@@ -1096,3 +1096,50 @@ input[type=range]::-webkit-slider-thumb:hover {
     margin-bottom: 1rem;
     color: var(--accent-primary, #3b82f6);
 }
+
+/* ============================================================================
+   BUBBLE STYLING - NO STROKES
+   ============================================================================ */
+
+.conflict-bubble,
+.event-bubble,
+.faction-bubble,
+.country-bubble,
+circle[class*="bubble"] {
+    stroke: none !important;
+    stroke-width: 0 !important;
+}
+
+/* Remove any default SVG stroke from bubbles */
+#world-map circle,
+#graph-svg circle,
+.bubblesGroup circle {
+    stroke: none !important;
+    stroke-width: 0 !important;
+}
+
+/* ============================================================================
+   RESPONSIVE CHARTS
+   ============================================================================ */
+
+.chart-container svg.stat-chart {
+    width: 100%;
+    max-width: 100%;
+}
+
+.chart-container svg.stat-chart.h-320 {
+    height: 220px;
+}
+
+/* Make chart container take full width of parent */
+#charts-panel .chart-container {
+    width: 100%;
+}
+
+/* Ensure SVG fills container */
+#faction-chart-timeline,
+#country-chart-timeline,
+#chart-timeline {
+    width: 100% !important;
+    max-width: 100%;
+}

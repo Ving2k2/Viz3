@@ -1154,16 +1154,20 @@ function updateDashboardUI(events, title, subtitle, onEventClick) {
         return;
     }
 
-    // 2. Casualties Over Time (Line Chart)
+    // 2. Conflict Trends Over Time (Dual-axis: Line Chart + Bar Chart)
     const timelineContainer = chartsPanel.append("div")
         .attr("class", "chart-container")
-        .style("margin-bottom", "1rem");
-    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Casualties Over Time");
+        .style("margin-bottom", "1rem")
+        .style("width", "100%");
+    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Conflict Trends Over Time");
     const timelineSvg = timelineContainer.append("svg")
         .attr("id", "chart-timeline")
         .attr("class", "stat-chart")
-        .attr("width", 380)
-        .attr("height", 150);
+        .attr("viewBox", "0 0 400 200")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("width", "100%")
+        .style("height", "auto")
+        .style("min-height", "180px");
     renderTimelineChartShared(events, timelineSvg);
 
     // 3. Conflicts with Connected Factions (Bar Chart)
@@ -1187,8 +1191,8 @@ function updateDashboardUI(events, title, subtitle, onEventClick) {
 
 // Render DUAL-AXIS chart: Casualties (line) + Events Count (bars) by Year
 function renderTimelineChartShared(events, svg) {
-    const width = 380, height = 150;
-    const margin = { top: 15, right: 45, bottom: 25, left: 45 };
+    const width = 400, height = 200;
+    const margin = { top: 25, right: 50, bottom: 30, left: 50 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 

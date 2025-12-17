@@ -5618,16 +5618,20 @@ function displayFactionCharts(factionData, factionEvents) {
         return;
     }
 
-    // Chart 1: Timeline
+    // Chart 1: Conflict Trends Over Time (Dual-axis: Line Chart + Bar Chart)
     const timelineContainer = chartsPanel.append("div")
         .attr("class", "chart-container")
-        .style("margin-bottom", "1rem");
-    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Casualties Over Time");
+        .style("margin-bottom", "1rem")
+        .style("width", "100%");
+    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Conflict Trends Over Time");
     const timelineSvg = timelineContainer.append("svg")
         .attr("id", "faction-chart-timeline")
         .attr("class", "stat-chart")
-        .attr("width", 380)
-        .attr("height", 150);
+        .attr("viewBox", "0 0 400 200")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("width", "100%")
+        .style("height", "auto")
+        .style("min-height", "180px");
     renderFactionChartTimeline(factionEvents, timelineSvg);
 
     // Chart 2: Connected Factions Casualties (Stacked Bar)
@@ -5996,55 +6000,109 @@ function renderCasualtyBreakdownChart(factionData, factionEvents, selectedFactio
             .style("border-radius", "5px");
     });
 }
+// Render DUAL-AXIS chart: Casualties (line) + Events Count (bars) by Year
 function renderFactionChartTimeline(events, svg) {
-    const width = 380, height = 150;
-    const margin = { top: 15, right: 15, bottom: 25, left: 45 };
+    const width = 400, height = 200;
+    const margin = { top: 25, right: 50, bottom: 30, left: 50 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
     const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const yearData = d3.rollup(events, v => d3.sum(v, e => e.best), d => d.year);
-    const data = Array.from(yearData, ([year, casualties]) => ({ year, casualties }))
+    // Aggregate by year: casualties and events count
+    const yearDataMap = d3.rollup(events,
+        v => ({ casualties: d3.sum(v, e => e.best), count: v.length }),
+        d => d.year
+    );
+    const data = Array.from(yearDataMap, ([year, values]) => ({ year, ...values }))
         .sort((a, b) => a.year - b.year);
 
     if (data.length === 0) return;
 
-    const x = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.year))
-        .range([0, chartWidth]);
+    const x = d3.scaleBand()
+        .domain(data.map(d => d.year))
+        .range([0, chartWidth])
+        .padding(0.3);
 
-    const y = d3.scaleLinear()
+    const yCasualties = d3.scaleLinear()
         .domain([0, d3.max(data, d => d.casualties)])
+        .nice()
         .range([chartHeight, 0]);
 
+    const yEvents = d3.scaleLinear()
+        .domain([0, d3.max(data, d => d.count)])
+        .nice()
+        .range([chartHeight, 0]);
+
+    // Draw bars (Events Count - blue)
+    g.selectAll(".event-bar")
+        .data(data)
+        .join("rect")
+        .attr("class", "event-bar")
+        .attr("x", d => x(d.year))
+        .attr("y", d => yEvents(d.count))
+        .attr("width", x.bandwidth())
+        .attr("height", d => chartHeight - yEvents(d.count))
+        .attr("fill", "rgba(59, 130, 246, 0.4)")
+        .attr("rx", 2)
+        .append("title")
+        .text(d => `${d.year}: ${d.count} events, ${d3.format(",d")(d.casualties)} casualties`);
+
+    // Draw line (Casualties - red)
     const line = d3.line()
-        .x(d => x(d.year))
-        .y(d => y(d.casualties));
+        .x(d => x(d.year) + x.bandwidth() / 2)
+        .y(d => yCasualties(d.casualties));
 
-    const area = d3.area()
-        .x(d => x(d.year))
-        .y0(chartHeight)
-        .y1(d => y(d.casualties));
-
-    g.append("path").datum(data)
-        .attr("fill", "rgba(239, 68, 68, 0.2)")
-        .attr("d", area);
-
-    g.append("path").datum(data)
+    g.append("path")
+        .datum(data)
         .attr("fill", "none")
         .attr("stroke", "#ef4444")
-        .attr("stroke-width", 2)
+        .attr("stroke-width", 2.5)
         .attr("d", line);
 
+    // Draw dots on line
+    g.selectAll(".casualty-dot")
+        .data(data)
+        .join("circle")
+        .attr("class", "casualty-dot")
+        .attr("cx", d => x(d.year) + x.bandwidth() / 2)
+        .attr("cy", d => yCasualties(d.casualties))
+        .attr("r", 3)
+        .attr("fill", "#ef4444");
+
+    // X-axis (years)
+    const yearLabels = data.filter((d, i) => i % Math.max(1, Math.ceil(data.length / 6)) === 0);
     g.append("g")
         .attr("transform", `translate(0,${chartHeight})`)
-        .call(d3.axisBottom(x).tickFormat(d3.format("d")).ticks(5))
-        .style("font-size", "9px");
+        .call(d3.axisBottom(x).tickValues(yearLabels.map(d => d.year)).tickFormat(d3.format("d")))
+        .style("font-size", "8px");
 
+    // Left Y-axis (Casualties - red)
     g.append("g")
-        .call(d3.axisLeft(y).ticks(4))
-        .style("font-size", "9px");
+        .call(d3.axisLeft(yCasualties).ticks(4).tickFormat(d3.format(".2s")))
+        .style("font-size", "8px")
+        .selectAll("text").style("fill", "#ef4444");
+
+    // Right Y-axis (Events - blue)
+    g.append("g")
+        .attr("transform", `translate(${chartWidth},0)`)
+        .call(d3.axisRight(yEvents).ticks(4))
+        .style("font-size", "8px")
+        .selectAll("text").style("fill", "#3b82f6");
+
+    // Legend
+    const legendG = g.append("g")
+        .attr("transform", `translate(${chartWidth / 2 - 60}, -8)`);
+
+    legendG.append("line").attr("x1", 0).attr("y1", 5).attr("x2", 15).attr("y2", 5)
+        .attr("stroke", "#ef4444").attr("stroke-width", 2);
+    legendG.append("text").attr("x", 18).attr("y", 8).text("Casualties")
+        .style("font-size", "7px").attr("fill", "#ef4444");
+
+    legendG.append("rect").attr("x", 75).attr("y", 0).attr("width", 10).attr("height", 10)
+        .attr("fill", "rgba(59, 130, 246, 0.4)");
+    legendG.append("text").attr("x", 88).attr("y", 8).text("Events")
+        .style("font-size", "7px").attr("fill", "#3b82f6");
 }
 
 // Render violence type pie chart for faction

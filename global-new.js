@@ -76,6 +76,7 @@ function returnToWorldView() {
     viewState.selectedCountryData = null;
     viewState.selectedEvent = null;
     viewState.selectedFaction = null;
+    viewState.selectedRegion = null;
 
     // Reset zoom
     svg.transition()
@@ -96,17 +97,36 @@ function returnToWorldView() {
     mapGroup.select(".sphere").style("display", "block").style("opacity", 1);
     mapGroup.select(".graticule").style("display", "block").style("opacity", 1);
 
-    // Reset left panel
-    resetLeftPanel();
+    // Reset LEFT panel - show global stats, hide country info
+    const leftPanel = d3.select("#left-panel");
+    leftPanel.select(".stats-container").style("display", "block");
+    leftPanel.select(".legend-section").style("display", "block");
+    leftPanel.select(".violence-filter-section").style("display", "block");
+    leftPanel.select("#country-panel").style("display", "none");
 
-    // Redraw world bubbles
+    // Update left panel stats
+    updateStats();
+
+    // Reset RIGHT panel - show and populate with Top Countries List
+    const chartsPanel = d3.select("#charts-panel");
+    chartsPanel.style("display", "flex");
+    chartsPanel.selectAll("*").remove();
+
+    // Header for right panel
+    chartsPanel.append("div")
+        .attr("class", "charts-header")
+        .html(`
+            <h3 id="charts-title" style="margin: 0 0 5px 0; font-size: 18px;">Top Countries by Casualties</h3>
+            <p id="charts-subtitle" style="margin: 0; font-size: 14px; color: #64748b;">Click to view country details</p>
+        `);
+
+    // Redraw world bubbles and top countries list
     setTimeout(() => {
         drawConflictBubbles();
         renderTopCountriesList();
     }, 100);
 
     d3.select("#reset-zoom").style("display", "none");
-    d3.select("#charts-panel").style("display", "none");
 }
 
 // ============================================================================
@@ -1161,16 +1181,20 @@ function updateDashboardUILocal(events, title, subtitle, onEventClick) {
         return;
     }
 
-    // Chart 1: Casualties Over Time (Line Chart)
+    // Chart 1: Conflict Trends Over Time (Dual-axis: Line Chart + Bar Chart)
     const timelineContainer = chartsPanel.append("div")
         .attr("class", "chart-container")
-        .style("margin-bottom", "1rem");
-    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Casualties Over Time");
+        .style("margin-bottom", "1rem")
+        .style("width", "100%");
+    timelineContainer.append("h4").style("margin", "0 0 10px 0").text("Conflict Trends Over Time");
     const timelineSvg = timelineContainer.append("svg")
         .attr("id", "country-chart-timeline")
         .attr("class", "stat-chart")
-        .attr("width", 380)
-        .attr("height", 150);
+        .attr("viewBox", "0 0 400 200")
+        .attr("preserveAspectRatio", "xMidYMid meet")
+        .style("width", "100%")
+        .style("height", "auto")
+        .style("min-height", "180px");
     renderTimelineChart(events, timelineSvg);
 
     // Chart 2: Conflicts with Connected Factions (Active Factions Bar Chart)
@@ -1193,8 +1217,8 @@ function updateDashboardUILocal(events, title, subtitle, onEventClick) {
 
 // Render DUAL-AXIS chart: Casualties (line) + Events Count (bars) by Year
 function renderTimelineChart(events, svg) {
-    const width = 380, height = 150;
-    const margin = { top: 15, right: 45, bottom: 25, left: 45 };
+    const width = 400, height = 200;
+    const margin = { top: 25, right: 50, bottom: 30, left: 50 };
     const chartWidth = width - margin.left - margin.right;
     const chartHeight = height - margin.top - margin.bottom;
 
@@ -2104,4 +2128,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     await drawWorldMap();
     await loadData();
     drawConflictBubbles();
+
+    // Initialize right panel with Top Countries List for World View
+    const chartsPanel = d3.select("#charts-panel");
+    chartsPanel.style("display", "flex");
+    chartsPanel.selectAll("*").remove();
+
+    // Header for right panel
+    chartsPanel.append("div")
+        .attr("class", "charts-header")
+        .html(`
+            <h3 id="charts-title" style="margin: 0 0 5px 0; font-size: 18px;">Top Countries by Casualties</h3>
+            <p id="charts-subtitle" style="margin: 0; font-size: 14px; color: #64748b;">Click to view country details</p>
+        `);
+
+    renderTopCountriesList();
 });
