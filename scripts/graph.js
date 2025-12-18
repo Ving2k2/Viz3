@@ -1112,6 +1112,80 @@ function findCountryFeature(countryName) {
     return countryFeature;
 }
 
+// Handle country click in Faction mode (country territory or aggregated bubble)
+// Preserves Connected Faction filter if active
+function handleFactionCountryClick(event, countryFeature) {
+    event.stopPropagation();
+
+    // Get country name safely - handle both map features and bubble data
+    let countryName;
+    if (countryFeature && countryFeature.properties && countryFeature.properties.name) {
+        countryName = countryFeature.properties.name;  // Map territory click
+    } else if (countryFeature && countryFeature.country) {
+        countryName = countryFeature.country;  // Bubble click
+    } else {
+        console.error("[handleFactionCountryClick] Cannot determine country name:", countryFeature);
+        return;
+    }
+
+    console.log("[handleFactionCountryClick] Clicked country:", countryName);
+    console.log("[handleFactionCountryClick] Preserving filter:", viewState.selectedConnectedFaction);
+
+    // Store country selection
+    viewState.selectedCountryInFaction = countryName;
+    viewState.factionViewLevel = 'country';
+
+    // Zoom to country for better UX (like old version)
+    const countryFeatureToZoom = findCountryFeature(countryName);
+    if (countryFeatureToZoom) {
+        zoomToCountry(countryFeatureToZoom);
+    }
+
+    // Clear aggregated bubbles
+    bubblesGroup.selectAll(".country-bubble").remove();
+
+    // Get faction events for this country
+    const factionId = viewState.selectedFactionName;
+    let countryEvents = rawData.filter(e => {
+        const currentYear = +document.getElementById('year-slider').value;
+        if (e.year > currentYear) return false;
+
+        const sideA = e.side_a || '';
+        const sideB = e.side_b || '';
+        const isFactionEvent = sideA.includes(factionId) || sideB.includes(factionId);
+        const isCountryEvent = e.country === countryName;
+
+        return isFactionEvent && isCountryEvent;
+    });
+
+    console.log(`[handleFactionCountryClick] Found ${countryEvents.length} faction events in ${countryName}`);
+
+    // Apply Connected Faction filter if active
+    if (viewState.selectedConnectedFaction) {
+        countryEvents = countryEvents.filter(e => {
+            const sideA = e.side_a || '';
+            const sideB = e.side_b || '';
+            return sideA.includes(viewState.selectedConnectedFaction) ||
+                sideB.includes(viewState.selectedConnectedFaction);
+        });
+        console.log(`[handleFactionCountryClick] Filtered to ${countryEvents.length} events (filter: ${viewState.selectedConnectedFaction})`);
+    }
+
+    console.log(`[handleFactionCountryClick] Drawing ${countryEvents.length} events (filter ${viewState.selectedConnectedFaction ? 'ACTIVE' : 'OFF'})`);
+
+    // Draw individual event bubbles (Canvas)
+    drawFactionEventBubbles(countryEvents);
+
+    // Update left panel with country context
+    const factionData = {
+        id: factionId,
+        country: countryName,
+        region: countryEvents[0]?.region
+    };
+    window.currentFactionData = factionData;
+    displayFactionInfo(factionData, window.currentGraphNodes || [], window.currentGraphLinks || []);
+}
+
 function handleCountryClick(event, d) {
     event.stopPropagation();
 
@@ -1650,6 +1724,17 @@ function enterFactionView(factionId, factionNodeData) {
 }
 
 function drawFactionBubbles(events) {
+    // GUARD: Only render canvas bubbles in faction map view
+    if (viewState.mode !== 'faction') {
+        return;
+    }
+
+    // GUARD: Don't render individual canvas bubbles if we're showing aggregated country bubbles
+    // When factionViewLevel is 'world', we show aggregated bubbles via drawFactionCountryBubbles
+    if (viewState.factionViewLevel === 'world') {
+        return;
+    }
+
     const eventsWithCoords = events.filter(e =>
         e.latitude != null && e.longitude != null
     );
@@ -1744,9 +1829,21 @@ function hideEventTooltipGraph() {
 
 // Draw country aggregated bubbles for multi-country faction view (like drawConflictBubbles)
 function drawFactionCountryBubbles(events, countries) {
-    // Aggregate events by country
+    // DON'T clear existing bubbles - let D3's data join (enter/update/exit) handle it efficiently
+    // bubblesGroup.selectAll(".faction-country-bubble").remove(); // REMOVED
+
+    // Apply filters to events BEFORE aggregation (like drawConflictBubbles)
+    const currentYear = +document.getElementById('year-slider').value;
+    let filteredEvents = events.filter(e => e.year <= currentYear);
+
+    // Apply violence type filter if active
+    if (viewState.selectedViolenceType) {
+        filteredEvents = filteredEvents.filter(e => e.type_of_violence_name === viewState.selectedViolenceType);
+    }
+
+    // Aggregate filtered events by country
     const countryData = [];
-    const grouped = d3.group(events, e => e.country);
+    const grouped = d3.group(filteredEvents, e => e.country);
 
     grouped.forEach((countryEvents, countryName) => {
         const eventsWithCoords = countryEvents.filter(e => e.latitude && e.longitude);
@@ -1804,43 +1901,7 @@ function drawFactionCountryBubbles(events, countries) {
         .attr("r", d => radiusScale(d.casualties));
 }
 
-// Handle click on country bubble in faction view - zoom to that country and show events
-function handleFactionCountryClick(event, d) {
-    event.stopPropagation();
-
-
-
-    // Set selected country in faction
-    viewState.selectedCountryInFaction = d.country;
-    viewState.factionViewLevel = 'country';
-
-    // Find country feature and zoom
-    const countryFeature = findCountryFeature(d.country);
-    if (countryFeature) {
-        zoomToCountry(countryFeature);
-    }
-
-    // Clear country bubbles and draw individual events for this country
-    bubblesGroup.selectAll(".faction-country-bubble").remove();
-
-    // CRITICAL: Filter events by BOTH country AND current year
-    const currentYear = +document.getElementById('year-slider').value;
-    let countryEvents = viewState.selectedFactionData.filter(e =>
-        e.country === d.country && e.year <= currentYear
-    );
-
-    // Apply violence type filter if active
-    if (viewState.selectedViolenceType) {
-        countryEvents = countryEvents.filter(e =>
-            e.type_of_violence_name === viewState.selectedViolenceType
-        );
-    }
-
-    console.log(`[handleFactionCountryClick] Drilling to ${d.country}, showing ${countryEvents.length} events (year <= ${currentYear})`);
-
-    // Use Canvas rendering
-    drawFactionEventBubbles(countryEvents);
-}
+// handleFactionCountryClick is now defined at line ~1117 with filter preservation
 
 // Update country bubble sizes when time slider changes (like updateWorldBubbles)
 function updateFactionCountryBubbleSizes(events) {
@@ -4275,15 +4336,23 @@ function updateFactionViewForYear(year) {
         updateFactionCountryBubbleSizes(factionEvents);
     }
 
-    // Re-apply connected faction filter if active (only applies to event bubbles)
-    if (viewState.selectedConnectedFaction && viewState.factionViewLevel === 'country') {
+    // Re-apply connected faction filter if active
+    if (viewState.selectedConnectedFaction) {
         const filteredEvents = factionEvents.filter(e => {
             const sideA = e.side_a || '';
             const sideB = e.side_b || '';
             return sideA.includes(viewState.selectedConnectedFaction) ||
                 sideB.includes(viewState.selectedConnectedFaction);
         });
-        filterEventBubblesOnMap(filteredEvents);
+
+        // Use appropriate update function based on view level
+        if (viewState.factionViewLevel === 'country') {
+            // Individual event bubbles: re-render Canvas
+            reRenderIndividualEventBubblesCanvas(filteredEvents);
+        } else if (viewState.factionViewLevel === 'world') {
+            // Aggregated country bubbles: update SVG sizes
+            updateFactionCountryBubbleSizesWithFilter(filteredEvents);
+        }
     }
 
     // Update charts with new data - use displayFactionCharts for consistency with graph view
@@ -5478,6 +5547,16 @@ function displayFactionInfo(factionData, allNodes, links) {
     const currentYear = +document.getElementById('year-slider').value;
     const countryFilter = viewState.selectedCountryInFaction;
 
+    // CRITICAL: Set factionViewLevel based on whether we're in country drill-down or world view
+    // This is needed for Connected Faction filter to route to correct rendering function
+    if (countryFilter) {
+        viewState.factionViewLevel = 'country';
+        console.log("[displayFactionInfo] Set factionViewLevel = 'country' (drilled down to:", countryFilter + ")");
+    } else {
+        viewState.factionViewLevel = 'world';
+        console.log("[displayFactionInfo] Set factionViewLevel = 'world' (aggregated view)");
+    }
+
     // Get all faction events for filtering
     let allFactionEvents = rawData.filter(e => {
         if (e.year > currentYear) return false;
@@ -5897,11 +5976,20 @@ function displayFactionInfo(factionData, allNodes, links) {
                     })
                     .on("click", function () {
                         const clickedId = conn.id;
+                        console.log("\n========================================");
+                        console.log("[Connected Faction Click] Clicked:", clickedId);
+                        console.log("[Connected Faction Click] Current viewState:", {
+                            mode: viewState.mode,
+                            factionViewLevel: viewState.factionViewLevel,
+                            selectedConnectedFaction: viewState.selectedConnectedFaction
+                        });
 
                         // Toggle selection
                         if (viewState.selectedConnectedFaction === clickedId) {
+                            console.log("[Connected Faction Click] CLEARING filter (was already selected)");
                             viewState.selectedConnectedFaction = null;
                         } else {
+                            console.log("[Connected Faction Click] APPLYING filter:", clickedId);
                             viewState.selectedConnectedFaction = clickedId;
                         }
 
@@ -5916,8 +6004,14 @@ function displayFactionInfo(factionData, allNodes, links) {
                                 return viewState.selectedConnectedFaction === itemId ? "0 2px 4px rgba(59, 130, 246, 0.3)" : "0 1px 2px rgba(0,0,0,0.05)";
                             });
 
+                        console.log("[Connected Faction Click] Calling updateFactionChartsWithFilter with:", {
+                            factionData: factionData.id,
+                            eventCount: factionEvents.length,
+                            connectedFactionsCount: connectedFactions.length
+                        });
                         // Update charts with filter
                         updateFactionChartsWithFilter(factionData, factionEvents, connectedFactions);
+                        console.log("========================================\n");
                     });
 
                 connItem.append("div")
@@ -6051,10 +6145,10 @@ function updateFactionChartsWithFilter(factionData, factionEvents, connectedFact
         renderFactionChartTopEvents(filteredEvents, eventsList);
 
         // Filter bubbles on map if in map view
-        // Check if we have country bubbles (multi-country view)
-        console.log("[DEBUG] Checking for country bubbles...");
-        const countryBubbles = bubblesGroup.selectAll(".country-bubble");
-        console.log("[DEBUG] Country bubbles found:", countryBubbles.size());
+        // Check if we have faction-country bubbles (multi-country faction view)
+        console.log("[DEBUG] Checking for faction-country bubbles...");
+        const countryBubbles = bubblesGroup.selectAll(".faction-country-bubble");
+        console.log("[DEBUG] Faction-country bubbles found:", countryBubbles.size());
         console.log("[DEBUG] bubbles Group:", bubblesGroup);
         console.log("[DEBUG] Filtered events count:", filteredEvents.length);
 
@@ -6073,10 +6167,10 @@ function updateFactionChartsWithFilter(factionData, factionEvents, connectedFact
         // Show bar chart of all connected factions
         renderConnectedFactionsChart(factionData, factionEvents, connectedFactions);
 
-        // Check if we have country bubbles to reset
-        console.log("[DEBUG RESET] Checking for country bubbles...");
-        const countryBubbles = bubblesGroup.selectAll(".country-bubble");
-        console.log("[DEBUG RESET] Country bubbles found:", countryBubbles.size());
+        // Check if we have faction-country bubbles to reset
+        console.log("[DEBUG RESET] Checking for faction-country bubbles...");
+        const countryBubbles = bubblesGroup.selectAll(".faction-country-bubble");
+        console.log("[DEBUG RESET] Faction-country bubbles found:", countryBubbles.size());
 
         if (!countryBubbles.empty()) {
             // Reset country bubbles to show all faction events
@@ -6104,20 +6198,211 @@ function updateFactionChartsWithFilter(factionData, factionEvents, connectedFact
 
 }
 
-// Filter event bubbles on map to show only relevant events
-// Called when connected faction filter is applied/removed
-function filterEventBubblesOnMap(filteredEvents) {
-    // CRITICAL: For Canvas rendering, we must RE-RENDER, not just filter SVG
-    // This ensures Canvas is properly cleared and redrawn
-    console.log("[filterEventBubblesOnMap] Re-rendering Canvas with", filteredEvents ? filteredEvents.length : "all", "events");
+// ============================================================================
+// FACTION FILTER FUNCTIONS - Separated by View Level
+// ============================================================================
+
+/**
+ * Re-render individual event bubbles on Canvas (for country-level zoom)
+ * ONLY use when viewState.factionViewLevel === 'country'
+ */
+function reRenderIndividualEventBubblesCanvas(filteredEvents) {
+    console.log("\n[reRenderIndividualEventBubblesCanvas] CALLED");
+    console.log("[reRenderIndividualEventBubblesCanvas] viewState.factionViewLevel:", viewState.factionViewLevel);
+    console.log("[reRenderIndividualEventBubblesCanvas] filteredEvents count:", filteredEvents ? filteredEvents.length : "null");
+
+    // GUARD: Only render Canvas bubbles in country-level faction view
+    if (viewState.factionViewLevel !== 'country') {
+        console.warn("[Canvas] ✗ GUARD FAILED - wrong view level:", viewState.factionViewLevel, "(expected 'country')");
+        return;
+    }
+
+    console.log("[Canvas] ✓ Guard passed, re-rendering individual event bubbles");
 
     if (!filteredEvents || filteredEvents.length === 0) {
+        console.log("[Canvas] No filtered events, using viewState.selectedFactionData");
         // No filter: re-render with all faction events
         drawFactionEventBubbles(viewState.selectedFactionData || []);
     } else {
+        console.log(`[Canvas] Calling drawFactionEventBubbles with ${filteredEvents.length} filtered events`);
         // Re-render with filtered events
         drawFactionEventBubbles(filteredEvents);
     }
+    console.log("[reRenderIndividualEventBubblesCanvas] COMPLETED\n");
+}
+
+/**
+ * Update aggregated country bubble sizes based on filtered events (for world-level zoom)
+ * ONLY use when viewState.factionViewLevel === 'world'
+ * RE-AGGREGATES and RE-DRAWS bubbles with filtered data
+ */
+function updateFactionCountryBubbleSizesWithFilter(filteredEvents) {
+    console.log("\n[updateFactionCountryBubbleSizesWithFilter] CALLED");
+    console.log("[updateFactionCountryBubbleSizesWithFilter] viewState.factionViewLevel:", viewState.factionViewLevel);
+    console.log("[updateFactionCountryBubbleSizesWithFilter] filteredEvents count:", filteredEvents.length);
+
+    // GUARD: Only update aggregated bubbles in world-level faction view
+    if (viewState.factionViewLevel !== 'world') {
+        console.warn("[SVG Aggregated] ✗ GUARD FAILED - wrong view level:", viewState.factionViewLevel, "(expected 'world')");
+        return;
+    }
+
+    console.log("[SVG Aggregated] ✓ Guard passed, re-aggregating and updating country bubbles");
+
+    // CRITICAL: Remove ALL old bubbles first - try multiple approaches to ensure complete removal
+    console.log("[SVG Aggregated] STEP 1: Counting old bubbles...");
+    const oldBubblesInGroup = bubblesGroup.selectAll(".faction-country-bubble").size();
+    const oldBubblesInSvg = d3.selectAll(".faction-country-bubble").size();
+    const oldBubblesCircles = d3.selectAll("circle.faction-country-bubble").size();
+    console.log(`[SVG Aggregated] Found bubbles - inGroup: ${oldBubblesInGroup}, inSvg: ${oldBubblesInSvg}, circles: ${oldBubblesCircles}`);
+
+    // DEBUG: List ALL circles on the map to see what classes they have
+    const allCircles = d3.selectAll("circle");
+    console.log(`[SVG Aggregated] DEBUG: Total circles on map: ${allCircles.size()}`);
+    allCircles.each(function (d, i) {
+        const circle = d3.select(this);
+        const classes = circle.attr("class") || "(no class)";
+        const r = circle.attr("r");
+        console.log(`  Circle ${i}: class="${classes}", r=${r}`);
+    });
+
+    // Method 1: Remove from bubblesGroup
+    if (bubblesGroup) {
+        console.log("[SVG Aggregated] Removing from bubblesGroup...");
+        bubblesGroup.selectAll(".country-bubble").remove();  // OLD class name
+        bubblesGroup.selectAll(".faction-country-bubble").remove();  // Just in case
+    }
+
+    // Method 2: Remove globally (in case they're elsewhere)
+    console.log("[SVG Aggregated] Removing globally...");
+    d3.selectAll(".country-bubble").remove();  // OLD class name
+    d3.selectAll(".faction-country-bubble").remove();  // Just in case
+
+    // Verify removal
+    const remaining = d3.selectAll(".faction-country-bubble").size();
+    console.log(`[SVG Aggregated] After removal: ${remaining} bubbles remaining`);
+    if (remaining > 0) {
+        console.error("[SVG Aggregated] ⚠️ WARNING: Failed to remove all bubbles!");
+    } else {
+        console.log("[SVG Aggregated] ✅ All old bubbles cleared successfully");
+    }
+
+    // Apply year filter (consistent with drawFactionCountryBubbles)
+    const currentYear = +document.getElementById('year-slider').value;
+    let yearFilteredEvents = filteredEvents.filter(e => e.year <= currentYear);
+
+    // Apply violence type filter if active
+    if (viewState.selectedViolenceType) {
+        yearFilteredEvents = yearFilteredEvents.filter(e => e.type_of_violence_name === viewState.selectedViolenceType);
+    }
+
+    // RE-AGGREGATE events by country (same logic as drawFactionCountryBubbles)
+    const countryData = [];
+    const grouped = d3.group(yearFilteredEvents, e => e.country);
+
+    grouped.forEach((countryEvents, countryName) => {
+        const eventsWithCoords = countryEvents.filter(e => e.latitude && e.longitude);
+        if (eventsWithCoords.length === 0) return;
+
+        // Calculate center position
+        const avgLat = d3.mean(eventsWithCoords, e => e.latitude);
+        const avgLon = d3.mean(eventsWithCoords, e => e.longitude);
+
+        countryData.push({
+            country: countryName,
+            coordinates: [avgLon, avgLat],
+            casualties: d3.sum(countryEvents, e => e.best),
+            eventCount: countryEvents.length,
+            region: countryEvents[0].region,
+            events: countryEvents
+        });
+    });
+
+    console.log("[SVG Aggregated] Re-aggregated into", countryData.length, "country bubbles");
+
+    const maxCasualties = d3.max(countryData, d => d.casualties) || 1;
+    const zoomFactor = viewState.zoomScale || 1;
+    const radiusScale = d3.scaleSqrt()
+        .domain([0, maxCasualties])
+        .range([8 / zoomFactor, 35 / zoomFactor]);
+
+    // Since we removed all old bubbles, only need ENTER (no update/exit needed)
+    console.log("[SVG Aggregated] Drawing", countryData.length, "new country bubbles...");
+    const bubbles = bubblesGroup.selectAll(".country-bubble")  // Use same class as original!
+        .data(countryData, d => d.country);  // Key function for proper tracking
+
+    // Enter: add ALL bubbles (since we cleared everything)
+    bubbles.enter()
+        .append("circle")
+        .attr("class", "country-bubble")  // Use .country-bubble NOT .faction-country-bubble!
+        .attr("cx", d => projection(d.coordinates)[0])
+        .attr("cy", d => projection(d.coordinates)[1])
+        .attr("r", 0)  // Start at 0
+        .style("fill", d => REGION_COLORS[d.region])
+        .style("cursor", "pointer")
+        .style("opacity", 0)  // Start invisible
+        .on("click", function (event, d) {
+            // Use unified handler - preserves filter and updates panels correctly
+            handleFactionCountryClick(event, d);
+        })
+        .transition().duration(500)
+        .attr("r", d => radiusScale(d.casualties))  // Grow to target size
+        .style("opacity", 0.8);  // Fade in
+
+    console.log("[SVG Aggregated] Country bubbles drawn successfully");
+}
+
+/**
+ * Update faction charts and map when Connected Faction filter changes
+ * Handles all view modes correctly (graph view, faction world view, faction country view)
+ */
+function updateFactionChartsWithFilter(factionData, allFactionEvents, connectedFactions) {
+    console.log("\n[updateFactionChartsWithFilter] ========== CALLED ==========");
+    console.log("[updateFactionChartsWithFilter] factionData.id:", factionData?.id);
+    console.log("[updateFactionChartsWithFilter] allFactionEvents.length:", allFactionEvents.length);
+    const selectedConnectedFaction = viewState.selectedConnectedFaction;
+    console.log("[updateFactionChartsWithFilter] selectedConnectedFaction:", selectedConnectedFaction);
+    console.log("[updateFactionChartsWithFilter] viewState:", {
+        mode: viewState.mode,
+        factionViewLevel: viewState.factionViewLevel
+    });
+
+    // Filter events by selected connected faction
+    let filteredEvents = allFactionEvents;
+    if (selectedConnectedFaction) {
+        filteredEvents = allFactionEvents.filter(e => {
+            const sideA = e.side_a || '';
+            const sideB = e.side_b || '';
+            return sideA.includes(selectedConnectedFaction) ||
+                sideB.includes(selectedConnectedFaction);
+        });
+    }
+    console.log(`[updateFactionChartsWithFilter] After filter: ${filteredEvents.length} events`);
+
+    console.log(`[Connected Faction Filter] ${selectedConnectedFaction ? 'Filtering by: ' + selectedConnectedFaction : 'Clearing filter'} - ${filteredEvents.length} events`);
+
+    // ALWAYS update charts in right panel
+    displayFactionCharts(factionData, filteredEvents);
+
+    // Update map ONLY if in faction map view
+    console.log(`[updateFactionChartsWithFilter] Checking map update: mode='${viewState.mode}'`);
+    if (viewState.mode === 'faction') {
+        console.log(`[updateFactionChartsWithFilter] ✓ In faction mode, level='${viewState.factionViewLevel}'`);
+        if (viewState.factionViewLevel === 'country') {
+            console.log("[updateFactionChartsWithFilter] → Calling reRenderIndividualEventBubblesCanvas");
+            // Individual event bubbles: re-render Canvas
+            reRenderIndividualEventBubblesCanvas(filteredEvents);
+        } else if (viewState.factionViewLevel === 'world') {
+            console.log("[updateFactionChartsWithFilter] → Calling updateFactionCountryBubbleSizesWithFilter");
+            // Aggregated country bubbles: update SVG sizes
+            updateFactionCountryBubbleSizesWithFilter(filteredEvents);
+        } else {
+            console.warn("[updateFactionChartsWithFilter] ✗ Unknown factionViewLevel:", viewState.factionViewLevel);
+        }
+    } else {
+        console.log(`[updateFactionChartsWithFilter] ✗ NOT in faction mode (mode='${viewState.mode}'), skipping map updates`);
+    }
+    console.log("[updateFactionChartsWithFilter] ========== COMPLETED ==========\n");
 }
 
 // Render HORIZONTAL bar chart for connected factions casualties
@@ -8096,69 +8381,7 @@ function setupGraphFilters() {
     d3.select("#relationship-filter-section").style("display", "block");
 }
 
-// ============================================================================
-// FACTION VIEW: COUNTRY CLICK ON MAP (works like clicking country bubble)
-// ============================================================================
-
-function handleFactionCountryClick(event, d) {
-    const mapCountryName = d.properties.name;
-
-    // Reverse mapping to get CSV country name
-    const reverseMapping = {
-        "Dem. Rep. Congo": "DR Congo (Zaire)",
-        "S. Sudan": "South Sudan",
-        "Central African Rep.": "Central African Republic",
-        "Eq. Guinea": "Equatorial Guinea",
-        "eSwatini": "Kingdom of eSwatini (Swaziland)",
-        "Côte d'Ivoire": "Ivory Coast",
-        "Lao PDR": "Laos",
-        "Bosnia and Herz.": "Bosnia-Herzegovina",
-    };
-
-    const csvCountryName = reverseMapping[mapCountryName] || mapCountryName;
-
-    // Check if this country has faction events
-    const factionEvents = viewState.selectedFactionData || [];
-    const countryEvents = factionEvents.filter(e => e.country === csvCountryName);
-
-    if (countryEvents.length === 0) {
-
-        return;
-    }
-
-    // Store selected country
-    viewState.selectedCountryInFaction = csvCountryName;
-
-    // Zoom to this country
-    const countryFeature = findCountryFeature(csvCountryName);
-    if (countryFeature) {
-        zoomToCountryForFaction(countryFeature);
-        setTimeout(() => {
-            // Clear ALL bubbles
-            bubblesGroup.selectAll("*").remove();
-
-            // Draw individual event bubbles for this country
-            drawFactionEventBubbles(countryEvents, 'country');
-
-            // Update left panel
-            const graphSvg = d3.select("#graph-svg");
-            const allNodes = graphSvg.selectAll(".graph-node").data();
-            const links = graphSvg.selectAll("path").data();
-            displayFactionInfo({
-                id: viewState.selectedFactionName,
-                region: countryEvents[0]?.region,
-                country: csvCountryName,
-                selectedCountry: csvCountryName
-            }, allNodes, links);
-
-            // Update charts
-            displayFactionCharts({
-                id: viewState.selectedFactionName,
-                selectedCountry: csvCountryName
-            }, countryEvents);
-        }, 600);
-    }
-}
+// handleFactionCountryClick is now defined at line ~1117 as unified handler
 
 // Old selectFactionEvent block removed - using optimized version at line 648
 
