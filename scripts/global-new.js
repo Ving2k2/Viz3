@@ -1004,7 +1004,7 @@ function updateCountryPanel() {
                 })
                 .html(`
                     <span style="color: ${isSelected ? '#ef4444' : '#475569'}; font-weight: ${isSelected ? '600' : '400'};">${faction.name}</span>
-                    <span style="color: ${numberColor}; font-weight: 600;">${d3.format(",d")(faction.events)}</span>
+                    <span style="color: ${numberColor}; font-weight: 600;">${d3.format(",d")(faction.events)} events</span>
                 `);
         });
     }

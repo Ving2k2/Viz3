@@ -37,7 +37,7 @@ class CanvasBubbleRenderer {
         this.canvas.style.position = 'absolute';
         this.canvas.style.top = '0';
         this.canvas.style.left = '0';
-        this.canvas.style.pointerEvents = 'all';
+        this.canvas.style.pointerEvents = 'all'; // Enable pointer events to detect clicks
         this.canvas.style.zIndex = '100';
         container.appendChild(this.canvas);
 
@@ -68,6 +68,8 @@ class CanvasBubbleRenderer {
             const hoveredBubble = this.findBubbleAt(x, y);
             if (hoveredBubble !== this.hoveredBubble) {
                 this.hoveredBubble = hoveredBubble;
+
+                //Update cursor based on hover state
                 this.canvas.style.cursor = hoveredBubble ? 'pointer' : 'default';
                 this.render();
 
