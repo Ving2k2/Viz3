@@ -1184,6 +1184,9 @@ function handleFactionCountryClick(event, countryFeature) {
     };
     window.currentFactionData = factionData;
     displayFactionInfo(factionData, window.currentGraphNodes || [], window.currentGraphLinks || []);
+
+    // Update right panel charts with country-specific data
+    displayFactionCharts(factionData, countryEvents);
 }
 
 function handleCountryClick(event, d) {
@@ -5568,59 +5571,55 @@ function displayFactionInfo(factionData, allNodes, links) {
     // CRITICAL: If country filter is active, only use events from that country
     if (countryFilter) {
         console.log("[Connected Factions] Filtering by country:", countryFilter);
+        console.log(`[Connected Factions] BEFORE country filter: ${allFactionEvents.length} events`);
         allFactionEvents = allFactionEvents.filter(e => e.country === countryFilter);
+        console.log(`[Connected Factions] AFTER country filter: ${allFactionEvents.length} events`);
     }
 
+    // Calculate Connected Factions from events (not from graph structure)
+    // This works in both world view and country drill-down
     const connectedFactions = [];
-    const graphSvg = d3.select("#graph-svg");
-    graphSvg.selectAll("path").each(function (d) {
-        const sourceId = (d.source && typeof d.source === 'object') ? d.source.id : d.source;
-        const targetId = (d.target && typeof d.target === 'object') ? d.target.id : d.target;
+    const factionStats = new Map(); // Store both event count AND casualties
 
-        if (sourceId === factionData.id) {
-            const targetNode = allNodes.find(n => n.id === targetId);
-            if (targetNode) {
-                // Recalculate EVENTS count from FILTERED events (by country if applicable)
-                const connectionEvents = allFactionEvents.filter(e => {
-                    const sideA = e.side_a || '';
-                    const sideB = e.side_b || '';
-                    return (sideA.includes(factionData.id) && sideB.includes(targetId)) ||
-                        (sideB.includes(factionData.id) && sideA.includes(targetId));
-                });
-                const eventCount = connectionEvents.length;
+    // Count events AND sum casualties for each connected faction
+    allFactionEvents.forEach(e => {
+        const sideA = e.side_a || '';
+        const sideB = e.side_b || '';
 
-                // Only add if there are events in filtered data
-                if (eventCount > 0) {
-                    connectedFactions.push({
-                        ...targetNode,
-                        relationshipType: d.type,
-                        events: eventCount
-                    });
-                }
-            }
-        } else if (targetId === factionData.id) {
-            const sourceNode = allNodes.find(n => n.id === sourceId);
-            if (sourceNode) {
-                // Recalculate EVENTS count from FILTERED events (by country if applicable)
-                const connectionEvents = allFactionEvents.filter(e => {
-                    const sideA = e.side_a || '';
-                    const sideB = e.side_b || '';
-                    return (sideA.includes(factionData.id) && sideB.includes(sourceId)) ||
-                        (sideB.includes(factionData.id) && sideA.includes(sourceId));
-                });
-                const eventCount = connectionEvents.length;
+        // Find which side is NOT our main faction
+        let connectedFaction = null;
+        if (sideA.includes(factionData.id) && !sideB.includes(factionData.id)) {
+            connectedFaction = sideB;
+        } else if (sideB.includes(factionData.id) && !sideA.includes(factionData.id)) {
+            connectedFaction = sideA;
+        }
 
-                // Only add if there are events in filtered data
-                if (eventCount > 0) {
-                    connectedFactions.push({
-                        ...sourceNode,
-                        relationshipType: d.type,
-                        events: eventCount
-                    });
-                }
-            }
+        if (connectedFaction && connectedFaction.trim()) {
+            const current = factionStats.get(connectedFaction) || { events: 0, casualties: 0 };
+            factionStats.set(connectedFaction, {
+                events: current.events + 1,
+                casualties: current.casualties + (e.best || 0)
+            });
         }
     });
+
+    // Convert to array and sort by event count
+    factionStats.forEach((stats, factionName) => {
+        // Try to find node data for this faction (for region/country info)
+        const nodeData = allNodes.find(n => n.id === factionName) || {};
+
+        connectedFactions.push({
+            id: factionName,
+            events: stats.events,
+            casualties: stats.casualties,  // Now includes casualties for chart
+            region: nodeData.region || factionData.region,
+            country: nodeData.country || factionData.country,
+            relationshipType: 'conflict'  // Default, could be refined
+        });
+    });
+
+    // Sort by event count descending
+    connectedFactions.sort((a, b) => b.events - a.events);
 
     console.log("[Connected Factions] Found", connectedFactions.length, "factions in", countryFilter || "all countries");
     // Store connected factions globally for chart access
@@ -6090,7 +6089,14 @@ function displayFactionCharts(factionData, factionEvents) {
     connContainer.append("h4").style("margin", "0 0 10px 0").text("Conflicts with Connected Factions");
     const connChartDiv = connContainer.append("div")
         .attr("id", "faction-connected-chart");
-    renderConnectedFactionsChart(factionData, factionEvents, window.currentConnectedFactions || []);
+
+    // If Connected Faction filter is active, show only that faction
+    let connectionsToShow = window.currentConnectedFactions || [];
+    if (viewState.selectedConnectedFaction) {
+        connectionsToShow = connectionsToShow.filter(f => f.id === viewState.selectedConnectedFaction);
+    }
+
+    renderConnectedFactionsChart(factionData, factionEvents, connectionsToShow);
 
     // Chart 3: Top Events
     const eventsContainer = chartsPanel.append("div")
@@ -6405,11 +6411,125 @@ function updateFactionChartsWithFilter(factionData, allFactionEvents, connectedF
     console.log("[updateFactionChartsWithFilter] ========== COMPLETED ==========\n");
 }
 
-// Render HORIZONTAL bar chart for connected factions casualties
+// Render connected factions chart - shows casualty breakdown when filter active
 function renderConnectedFactionsChart(factionData, factionEvents, connectedFactions) {
     const container = d3.select("#faction-connected-chart");
     container.html("");
 
+    // Check if we have a Connected Faction filter active
+    const selectedConnected = viewState.selectedConnectedFaction;
+
+    if (selectedConnected) {
+        // DETAILED VIEW: Show casualty breakdown between main faction and selected opponent
+        renderCasualtyBreakdown(container, factionData, factionEvents, selectedConnected);
+    } else {
+        // LIST VIEW: Show all connected factions
+        renderConnectedFactionsList(container, factionData, factionEvents, connectedFactions);
+    }
+}
+
+// Render detailed casualty breakdown (when filter is active)
+function renderCasualtyBreakdown(container, factionData, factionEvents, opponentId) {
+    // Calculate casualties by affiliation
+    let mainFactionCasualties = 0;
+    let opponentCasualties = 0;
+    let civilianCasualties = 0;
+    let unknownCasualties = 0;
+
+    factionEvents.forEach(e => {
+        const sideA = e.side_a || '';
+        const sideB = e.side_b || '';
+
+        // Use specific death fields for accurate breakdown
+        const deathsA = e.deaths_a || 0;
+        const deathsB = e.deaths_b || 0;
+        const deathsCiv = e.deaths_civilians || 0;
+        const deathsUnk = e.deaths_unknown || 0;
+
+        // Determine which side is main faction and which is opponent
+        const mainIsA = sideA.includes(factionData.id);
+        const mainIsB = sideB.includes(factionData.id);
+        const oppIsA = sideA.includes(opponentId);
+        const oppIsB = sideB.includes(opponentId);
+
+        // Allocate deaths
+        if (mainIsA) {
+            mainFactionCasualties += deathsA;
+        } else if (mainIsB) {
+            mainFactionCasualties += deathsB;
+        }
+
+        if (oppIsA) {
+            opponentCasualties += deathsA;
+        } else if (oppIsB) {
+            opponentCasualties += deathsB;
+        }
+
+        // Always add civilian and unknown
+        civilianCasualties += deathsCiv;
+        unknownCasualties += deathsUnk;
+    });
+
+    const totalCasualties = mainFactionCasualties + opponentCasualties + civilianCasualties + unknownCasualties;
+
+    // Header
+    container.append("div")
+        .style("padding", "1rem")
+        .style("background", "#fef2f2")
+        .style("border-radius", "8px 8px 0 0")
+        .style("border-left", "4px solid #ef4444")
+        .html(`
+            <div style="font-size: 0.9rem; color: #991b1b; font-weight: 600; margin-bottom: 0.5rem;">vs Opponent: ${opponentId}</div>
+            <div style="font-size: 2rem; font-weight: 700; color: #dc2626; line-height: 1;">${d3.format(",d")(totalCasualties)}</div>
+            <div style="font-size: 0.75rem; color: #991b1b; margin-top: 0.25rem;">Total Casualties (${factionEvents.length} events)</div>
+            <div style="font-size: 0.7rem; color: #ef4444; margin-top: 0.15rem;">Opponents</div>
+        `);
+
+    // Breakdown bars
+    const breakdownData = [
+        { label: factionData.id, value: mainFactionCasualties, color: "#dc2626" },
+        { label: opponentId, value: opponentCasualties, color: "#3b82f6" },
+        { label: "Civilian Casualties", value: civilianCasualties, color: "#64748b" },
+        { label: "Unknown Affiliation", value: unknownCasualties, color: "#94a3b8" }
+    ].filter(d => d.value > 0);
+
+    const barsContainer = container.append("div")
+        .style("padding", "1rem")
+        .style("background", "white")
+        .style("border-radius", "0 0 8px 8px");
+
+    breakdownData.forEach(d => {
+        const percent = totalCasualties > 0 ? ((d.value / totalCasualties) * 100).toFixed(1) : 0;
+
+        const row = barsContainer.append("div")
+            .style("margin-bottom", "0.75rem");
+
+        // Label + value
+        row.append("div")
+            .style("display", "flex")
+            .style("justify-content", "space-between")
+            .style("margin-bottom", "0.25rem")
+            .html(`
+                <span style="font-size: 0.8rem; font-weight: 600; color: #1e293b;">${d.label}</span>
+                <span style="font-size: 0.8rem; color: #64748b;">${d3.format(",d")(d.value)} (${percent}%)</span>
+            `);
+
+        // Progress bar
+        row.append("div")
+            .style("height", "20px")
+            .style("background", "#e2e8f0")
+            .style("border-radius", "4px")
+            .style("overflow", "hidden")
+            .append("div")
+            .style("height", "100%")
+            .style("width", `${percent}%`)
+            .style("background", d.color)
+            .style("transition", "width 0.3s ease");
+    });
+}
+
+// Render list of all connected factions (when no filter)
+function renderConnectedFactionsList(container, factionData, factionEvents, connectedFactions) {
     if (!connectedFactions || connectedFactions.length === 0) {
         container.append("div")
             .style("padding", "1rem")
@@ -6419,14 +6539,12 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
         return;
     }
 
-    // Get top connected factions by casualties
     const topFactions = connectedFactions
         .sort((a, b) => b.casualties - a.casualties)
         .slice(0, 8);
 
     const maxCasualties = d3.max(topFactions, d => d.casualties) || 1;
 
-    // Horizontal bar list (no SVG, just HTML for better readability)
     const barList = container.append("div")
         .style("display", "flex")
         .style("flex-direction", "column")
@@ -6438,36 +6556,20 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
             .attr("data-faction-id", faction.id)
             .style("cursor", "pointer")
             .style("padding", "0.5rem")
-            .style("background", viewState.selectedConnectedFaction === faction.id ? "#dbeafe" : "#f8fafc")
+            .style("background", "#f8fafc")
             .style("border-radius", "6px")
             .style("transition", "all 0.2s ease")
             .on("mouseenter", function () {
-                if (viewState.selectedConnectedFaction !== faction.id) {
-                    d3.select(this).style("background", "#e0e7ff");
-                }
+                d3.select(this).style("background", "#e0e7ff");
             })
             .on("mouseleave", function () {
-                if (viewState.selectedConnectedFaction !== faction.id) {
-                    d3.select(this).style("background", "#f8fafc");
-                }
+                d3.select(this).style("background", "#f8fafc");
             })
             .on("click", function () {
-                // Toggle filter - same as clicking in connected factions list
-                if (viewState.selectedConnectedFaction === faction.id) {
-                    viewState.selectedConnectedFaction = null;
-                } else {
-                    viewState.selectedConnectedFaction = faction.id;
-                }
-                // Update both the list and chart
-                d3.selectAll(".connected-faction-item")
-                    .style("background", function () {
-                        const itemId = d3.select(this).attr("data-faction-id");
-                        return viewState.selectedConnectedFaction === itemId ? "#dbeafe" : "#f8fafc";
-                    });
+                viewState.selectedConnectedFaction = faction.id;
                 updateFactionChartsWithFilter(factionData, factionEvents, connectedFactions);
             });
 
-        // Faction name row
         barRow.append("div")
             .style("display", "flex")
             .style("justify-content", "space-between")
@@ -6481,7 +6583,6 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
                 </span>
             `);
 
-        // Horizontal bar
         const barPercent = (faction.casualties / maxCasualties) * 100;
         barRow.append("div")
             .style("height", "12px")
@@ -6496,29 +6597,12 @@ function renderConnectedFactionsChart(factionData, factionEvents, connectedFacti
                 "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)")
             .style("border-radius", "6px");
 
-        // Casualty number
         barRow.append("div")
             .style("font-size", "0.7rem")
             .style("color", "#64748b")
             .style("margin-top", "0.15rem")
             .text(`${d3.format(",d")(faction.casualties)} casualties`);
     });
-
-    // Legend
-    const legend = container.append("div")
-        .style("display", "flex")
-        .style("justify-content", "center")
-        .style("gap", "1rem")
-        .style("margin-top", "0.75rem")
-        .style("padding-top", "0.5rem")
-        .style("border-top", "1px solid #e2e8f0");
-
-    legend.append("div")
-        .style("font-size", "0.75rem")
-        .html('<span style="display:inline-block;width:12px;height:12px;background:#22c55e;border-radius:2px;margin-right:4px;"></span>Ally');
-    legend.append("div")
-        .style("font-size", "0.75rem")
-        .html('<span style="display:inline-block;width:12px;height:12px;background:#ef4444;border-radius:2px;margin-right:4px;"></span>Opponent');
 }
 
 // Render detailed casualty breakdown when filter is active
@@ -6790,6 +6874,8 @@ function renderFactionChartType(events, svg) {
         .style("font-weight", "600")
         .text(d => d.data[1] > 3 ? d.data[1] : "");
 }
+// ORPHANED CODE END
+
 
 // Navigate from Graph View to Faction Map View and select specific event
 function navigateToFactionViewWithEvent(event) {
